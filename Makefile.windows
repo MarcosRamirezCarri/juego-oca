@@ -1,0 +1,28 @@
+CXX = g++
+CXXFLAGS = -std=c++17 -Wall -Iassets
+TARGET = juego_oca.exe
+SOURCES = src/main.cpp src/Dado.cpp src/Jugador.cpp src/Casilla.cpp src/Tablero.cpp src/Juego.cpp
+OBJECTS = $(SOURCES:src/%.cpp=%.o)
+
+all: $(TARGET)
+
+$(TARGET): $(OBJECTS)
+	$(CXX) $(OBJECTS) -o $(TARGET)
+
+%.o: src/%.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+run: $(TARGET)
+	./$(TARGET)
+
+clean:
+	del /Q $(OBJECTS) $(TARGET) 2>nul || echo No hay archivos para limpiar
+
+# Para usar con MinGW
+mingw: CXX = g++
+mingw: all
+
+# Para usar con MSVC
+msvc: CXX = cl
+msvc: CXXFLAGS = /std:c++17 /EHsc /Iassets
+msvc: all 
