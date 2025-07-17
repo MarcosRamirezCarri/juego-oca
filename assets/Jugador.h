@@ -3,18 +3,20 @@
 
 #include <string>
 
+using namespace std;
+
 class Jugador {
 private:
-    std::string nombre;
+    string nombre;
     int posicion;
     int turnosPerdidos;
     bool enPozo;
 
 public:
-    Jugador(const std::string& nombre);
+    Jugador(const string& nombre);
     
     // Métodos para obtener información
-    std::string conseguirNombre() const;
+    string conseguirNombre() const;
     int conseguirPosicion() const;
     int getTurnosPerdidos() const;
     bool estaEnPozo() const;

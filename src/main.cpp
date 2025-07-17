@@ -9,7 +9,8 @@
 using namespace std;
 
 void mostrarMenu() {
-    cout << "\n=== JUEGO DE LA OCA ===" << endl;
+    cout << "\n=== JUEGO DE LA OCA - MODO CONSOLA ===" << endl;
+    cout << "Para la versión gráfica, ejecuta: ./gui/juego_oca_gui" << endl;
     cout << "1. Iniciar nuevo juego" << endl;
     cout << "2. Ver reglas" << endl;
     cout << "3. Salir" << endl;

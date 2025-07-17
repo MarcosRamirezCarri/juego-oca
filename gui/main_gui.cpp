@@ -3,25 +3,27 @@
 #include <vector>
 #include <string>
 
+using namespace std;
+
 int main() {
     // Inicializar semilla para números aleatorios
     srand(time(0));
     
     try {
-        // Crear la interfaz gráfica
+        // Crear la interfaz gráfica del juego
         JuegoGUI gui;
         
-        // Configurar jugadores (por ahora hardcodeados, se puede hacer interactivo)
-        std::vector<std::string> nombresJugadores = {"Ana", "Carlos", "María"};
+        // Configurar jugadores (por ahora hardcodeados)
+        vector<string> nombresJugadores = {"Ana", "Carlos", "María"};
         
-        // Inicializar el juego
+        // Inicializar el juego con la interfaz gráfica
         gui.inicializarJuego(nombresJugadores);
         
-        // Ejecutar el juego
+        // Ejecutar el juego gráfico
         gui.ejecutar();
         
-    } catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
+    } catch (const exception& e) {
+        cerr << "Error: " << e.what() << endl;
         return 1;
     }
     

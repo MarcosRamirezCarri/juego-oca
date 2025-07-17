@@ -2,8 +2,9 @@
 #include "Jugador.h"
 #include <iostream>
 
+using namespace std;
 // Implementación de la clase base Casilla
-Casilla::Casilla(int numero, const std::string& nombre) 
+Casilla::Casilla(int numero, const string& nombre) 
     : numeroCasilla(numero), nombre(nombre) {
 }
 
@@ -11,7 +12,7 @@ int Casilla::getNumero() const {
     return numeroCasilla;
 }
 
-std::string Casilla::getNombre() const {
+string Casilla::getNombre() const {
     return nombre;
 }
 
@@ -24,7 +25,7 @@ void CasillaNormal::accionJugador(Jugador& jugador) {
     // No hace nada especial
 }
 
-std::string CasillaNormal::getDescripcion() const {
+string CasillaNormal::getDescripcion() const {
     return "Casilla normal sin efectos especiales";
 }
 
@@ -47,10 +48,10 @@ void CasillaOca::accionJugador(Jugador& jugador) {
     else siguienteOca = 63; // Por si acaso
     
     jugador.moverJugador(siguienteOca);
-    std::cout << "¡De oca a oca y tiro porque me toca! Avanzas a la casilla " << siguienteOca << std::endl;
+    cout << "¡De oca a oca y tiro porque me toca! Avanzas a la casilla " << siguienteOca << endl;
 }
 
-std::string CasillaOca::getDescripcion() const {
+string CasillaOca::getDescripcion() const {
     return "Salta a la siguiente oca y obtienes un turno extra";
 }
 
@@ -61,10 +62,10 @@ CasillaPuente::CasillaPuente()
 
 void CasillaPuente::accionJugador(Jugador& jugador) {
     jugador.moverJugador(12);
-    std::cout << "¡Has caído en el puente! Vas directamente a la casilla 12 (Posada)" << std::endl;
+    cout << "¡Has caído en el puente! Vas directamente a la casilla 12 (Posada)" << endl;
 }
 
-std::string CasillaPuente::getDescripcion() const {
+string CasillaPuente::getDescripcion() const {
     return "Te lleva directamente a la casilla 12";
 }
 
@@ -75,10 +76,10 @@ CasillaPosada::CasillaPosada()
 
 void CasillaPosada::accionJugador(Jugador& jugador) {
     jugador.perderTurnos(1);
-    std::cout << "¡Has caído en la posada! Pierdes 1 turno" << std::endl;
+    cout << "¡Has caído en la posada! Pierdes 1 turno" << endl;
 }
 
-std::string CasillaPosada::getDescripcion() const {
+string CasillaPosada::getDescripcion() const {
     return "Pierdes 1 turno";
 }
 
@@ -89,10 +90,10 @@ CasillaPozo::CasillaPozo()
 
 void CasillaPozo::accionJugador(Jugador& jugador) {
     jugador.entrarPozo();
-    std::cout << "¡Has caído en el pozo! Quedas atrapado hasta que otro jugador caiga aquí" << std::endl;
+    cout << "¡Has caído en el pozo! Quedas atrapado hasta que otro jugador caiga aquí" << endl;
 }
 
-std::string CasillaPozo::getDescripcion() const {
+string CasillaPozo::getDescripcion() const {
     return "Quedas atrapado hasta que otro jugador caiga aquí";
 }
 
@@ -103,10 +104,10 @@ CasillaLaberinto::CasillaLaberinto()
 
 void CasillaLaberinto::accionJugador(Jugador& jugador) {
     jugador.moverJugador(30);
-    std::cout << "¡Has entrado en el laberinto! Retrocedes a la casilla 30" << std::endl;
+    cout << "¡Has entrado en el laberinto! Retrocedes a la casilla 30" << endl;
 }
 
-std::string CasillaLaberinto::getDescripcion() const {
+string CasillaLaberinto::getDescripcion() const {
     return "Retrocedes a la casilla 30";
 }
 
@@ -117,10 +118,10 @@ CasillaCarcel::CasillaCarcel()
 
 void CasillaCarcel::accionJugador(Jugador& jugador) {
     jugador.perderTurnos(2);
-    std::cout << "¡Has caído en la cárcel! Pierdes 2 turnos" << std::endl;
+    cout << "¡Has caído en la cárcel! Pierdes 2 turnos" << endl;
 }
 
-std::string CasillaCarcel::getDescripcion() const {
+string CasillaCarcel::getDescripcion() const {
     return "Pierdes 2 turnos";
 }
 
@@ -131,10 +132,10 @@ CasillaCalavera::CasillaCalavera()
 
 void CasillaCalavera::accionJugador(Jugador& jugador) {
     jugador.moverJugador(1);
-    std::cout << "¡Has caído en la calavera! Vuelves a la casilla 1" << std::endl;
+    cout << "¡Has caído en la calavera! Vuelves a la casilla 1" << endl;
 }
 
-std::string CasillaCalavera::getDescripcion() const {
+string CasillaCalavera::getDescripcion() const {
     return "Vuelves a la casilla 1";
 }
 
@@ -146,9 +147,10 @@ CasillaJardin::CasillaJardin()
 void CasillaJardin::accionJugador(Jugador& jugador) {
     // Esta casilla se maneja de forma especial en la lógica del juego
     // para verificar si el jugador llegó exactamente
-    std::cout << "¡Has llegado al Jardín de la Oca!" << std::endl;
+    
+    cout << "¡Has llegado al Jardín de la Oca!" << endl;
 }
 
-std::string CasillaJardin::getDescripcion() const {
+string CasillaJardin::getDescripcion() const {
     return "Meta final del juego - debes llegar exactamente aquí";
 } 

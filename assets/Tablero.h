@@ -4,9 +4,11 @@
 #include <memory>
 #include "Casilla.h"
 
+using namespace std;
+
 class Tablero {
 private:
-    std::vector<std::unique_ptr<Casilla>> casillas;
+    vector<unique_ptr<Casilla>> casillas;
     static const int NUMERO_CASILLAS = 63;
 
 public:

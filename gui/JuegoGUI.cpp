@@ -3,6 +3,8 @@
 #include <sstream>
 #include <algorithm>
 
+using namespace std;
+
 JuegoGUI::JuegoGUI() 
     : window(sf::VideoMode(ANCHO_VENTANA, ALTO_VENTANA), "Juego de la Oca - POO"),
       juegoIniciado(false),
@@ -16,7 +18,7 @@ JuegoGUI::JuegoGUI()
         if (!font.loadFromFile("/System/Library/Fonts/Arial.ttf")) {
             if (!font.loadFromFile("C:/Windows/Fonts/arial.ttf")) {
                 if (!font.loadFromFile("C:/Windows/Fonts/calibri.ttf")) {
-                    std::cerr << "Error: No se pudo cargar la fuente" << std::endl;
+                    cerr << "Error: No se pudo cargar la fuente" << endl;
                 }
             }
         }
@@ -32,22 +34,22 @@ JuegoGUI::JuegoGUI()
     textoJugadorActual.setFont(font);
     textoJugadorActual.setCharacterSize(20);
     textoJugadorActual.setFillColor(sf::Color::White);
-    textoJugadorActual.setPosition(ANCHO_VENTANA - 300, 50);
+    textoJugadorActual.setPosition(ANCHO_VENTANA - 500, 50);
     
     textoDado.setFont(font);
     textoDado.setCharacterSize(24);
     textoDado.setFillColor(sf::Color::White);
-    textoDado.setPosition(ANCHO_VENTANA - 300, 100);
+    textoDado.setPosition(ANCHO_VENTANA - 500, 100);
     
     textoMensaje.setFont(font);
     textoMensaje.setCharacterSize(16);
     textoMensaje.setFillColor(sf::Color::Yellow);
-    textoMensaje.setPosition(ANCHO_VENTANA - 300, 150);
+    textoMensaje.setPosition(ANCHO_VENTANA - 500, 150);
     
     // Botón del dado
     botonDado.setSize(sf::Vector2f(120, 50));
     botonDado.setFillColor(sf::Color(70, 130, 180));
-    botonDado.setPosition(ANCHO_VENTANA - 300, 200);
+    botonDado.setPosition(ANCHO_VENTANA - 500, 200);
     
     textoBotonDado.setFont(font);
     textoBotonDado.setString("LANZAR DADO");
@@ -69,7 +71,7 @@ JuegoGUI::JuegoGUI()
         casillas[i].setOutlineColor(sf::Color::Black);
         
         numerosCasillas[i].setFont(font);
-        numerosCasillas[i].setString(std::to_string(i));
+        numerosCasillas[i].setString(to_string(i));
         numerosCasillas[i].setCharacterSize(10);
         numerosCasillas[i].setFillColor(COLOR_TEXTO);
         
@@ -113,7 +115,7 @@ JuegoGUI::JuegoGUI()
         }
     }
     // Inicializar el texto del turno
-    textoJugadorActual.setString("Turno: Jugador 1");
+    textoJugadorActual.setString("Turno: Esperando inicio del juego");
 }
 
 void JuegoGUI::ejecutar() {
@@ -129,15 +131,16 @@ void JuegoGUI::ejecutar() {
     }
 }
 
-void JuegoGUI::inicializarJuego(const std::vector<std::string>& nombres) {
-    juego = std::make_unique<Juego>(nombres);
+void JuegoGUI::inicializarJuego(const vector<string>& nombres) {
+    juego = make_unique<Juego>(nombres);
+    juego->setGUI(this);  // Conectar la GUI con el juego
     juegoIniciado = true;
     
     // Inicializar fichas de jugadores
     fichasJugadores.clear();
     nombresJugadores.clear();
     
-    std::vector<sf::Color> coloresFichas = {
+    vector<sf::Color> coloresFichas = {
         sf::Color::Red,
         sf::Color::Blue,
         sf::Color::Green,
@@ -153,14 +156,19 @@ void JuegoGUI::inicializarJuego(const std::vector<std::string>& nombres) {
         fichasJugadores.push_back(ficha);
         
         // Nombre del jugador
-        sf::Text nombre;
+        sf::Text nombre ;
         nombre.setFont(font);
         nombre.setString(nombres[i]);
-        nombre.setCharacterSize(14);
+        nombre.setCharacterSize(20);
         nombre.setFillColor(coloresFichas[i % coloresFichas.size()]);
-        nombre.setPosition(ANCHO_VENTANA - 300, 300 + i * 30);
+        nombre.setPosition(ANCHO_VENTANA - 500, 300 + i * 30);
         nombresJugadores.push_back(nombre);
     }
+    
+    // Actualizar el texto del turno inicial
+    int actual = juego->obtenerJugadorActual();
+    string turnoText = "Turno: " + juego->obtenerJugador(actual).conseguirNombre();
+    textoJugadorActual.setString(turnoText);
     
     mostrarMensaje("¡Juego iniciado! Haz clic en 'LANZAR DADO' para jugar.");
 }
@@ -189,9 +197,31 @@ void JuegoGUI::dibujarJugadores() {
         window.draw(fichasJugadores[i]);
     }
     
-    // Dibujar nombres de jugadores
-    for (const auto& nombre : nombresJugadores) {
-        window.draw(nombre);
+    // Dibujar nombres de jugadores con sus posiciones actuales
+    for (size_t i = 0; i < nombresJugadores.size(); i++) {
+        // Actualizar el texto con la posición actual
+        int posicion = juego->obtenerJugador(i).conseguirPosicion();
+        string nombreCompleto = nombresJugadores[i].getString().toAnsiString();
+        
+        // Extraer solo el nombre (sin la posición anterior)
+        size_t posParentesis = nombreCompleto.find(" (Casilla");
+        if (posParentesis != string::npos) {
+            nombreCompleto = nombreCompleto.substr(0, posParentesis);
+        }
+        
+        // Agregar la posición actual
+        nombreCompleto += " (Casilla " + to_string(posicion) + ")";
+        
+        // Agregar información de estado si es necesario
+        if (juego->obtenerJugador(i).estaEnPozo()) {
+            nombreCompleto += " - EN POZO";
+        }
+        if (juego->obtenerJugador(i).getTurnosPerdidos() > 0) {
+            nombreCompleto += " - Pierde " + to_string(juego->obtenerJugador(i).getTurnosPerdidos()) + " turnos";
+        }
+        
+        nombresJugadores[i].setString(nombreCompleto);
+        window.draw(nombresJugadores[i]);
     }
 }
 
@@ -204,21 +234,21 @@ void JuegoGUI::dibujarUI() {
     window.draw(textoBotonDado);
 
     // Dibujar historial de acciones
-    float yHist = 350;
+    float yHist = 400;
     sf::Text tHist;
     tHist.setFont(font);
     tHist.setCharacterSize(14);
     tHist.setFillColor(sf::Color::White);
     tHist.setStyle(sf::Text::Regular);
-    tHist.setPosition(ANCHO_VENTANA - 300, yHist);
+    tHist.setPosition(ANCHO_VENTANA - 500, yHist);
     tHist.setString("Historial:");
     window.draw(tHist);
-    yHist += 22;
+    yHist += 28;
     for (const auto& linea : historial) {
         tHist.setString(linea);
-        tHist.setPosition(ANCHO_VENTANA - 300, yHist);
+        tHist.setPosition(ANCHO_VENTANA - 500, yHist);
         window.draw(tHist);
-        yHist += 18;
+        yHist += 34;
     }
 }
 
@@ -237,12 +267,23 @@ void JuegoGUI::procesarEventos() {
                     if (juegoIniciado && juego->estaJugando()) {
                         // Usar la lógica real del juego
                         auto [resultado, desc] = juego->lanzarDadoYJugarTurno();
-                        textoDado.setString("Dado: " + std::to_string(resultado));
+                        textoDado.setString("Dado: " + to_string(resultado));
                         mostrarMensaje(desc);
                         agregarAlHistorial(desc);
-                        // Actualizar el texto del turno
+                        
+                        // Actualizar el texto del turno con información del estado
                         int actual = juego->obtenerJugadorActual();
-                        textoJugadorActual.setString("Turno: Jugador " + std::to_string(actual + 1));
+                        string turnoText = "Turno: " + juego->obtenerJugador(actual).conseguirNombre();
+                        
+                        // Agregar información de estado del jugador
+                        if (juego->obtenerJugador(actual).estaEnPozo()) {
+                            turnoText += " (EN POZO)";
+                        }
+                        if (juego->obtenerJugador(actual).getTurnosPerdidos() > 0) {
+                            turnoText += " (Pierde " + to_string(juego->obtenerJugador(actual).getTurnosPerdidos()) + " turnos)";
+                        }
+                        
+                        textoJugadorActual.setString(turnoText);
                     }
                 }
             }
@@ -254,7 +295,7 @@ void JuegoGUI::actualizarJuego() {
     // Aquí se actualizaría la lógica del juego
 }
 
-void JuegoGUI::mostrarMensaje(const std::string& mensaje) {
+void JuegoGUI::mostrarMensaje(const string& mensaje) {
     textoMensaje.setString(mensaje);
 }
 
@@ -274,16 +315,35 @@ sf::Vector2f JuegoGUI::obtenerPosicionCasilla(int numeroCasilla) {
     return sf::Vector2f(x, y);
 }
 
-void JuegoGUI::animarMovimiento(int jugadorIndex, int casillaDestino) {
-    // Aquí se implementaría la animación del movimiento
-    // Por simplicidad, por ahora solo actualizamos la posición
-    sf::Vector2f pos = obtenerPosicionCasilla(casillaDestino);
-    fichasJugadores[jugadorIndex].setPosition(pos.x + 5, pos.y + 5);
-} 
 
-void JuegoGUI::agregarAlHistorial(const std::string& accion) {
+void JuegoGUI::agregarAlHistorial(const string& accion) {
     historial.push_back(accion);
     if (historial.size() > 10) {
         historial.erase(historial.begin());
+    }
+}
+
+// Métodos para ser llamado desde Juego (patrón Observer)
+void JuegoGUI::actualizarTurno() {
+    if (juegoIniciado && juego) {
+        int actual = juego->obtenerJugadorActual();
+        textoJugadorActual.setString("Turno: Jugador " + to_string(actual + 1));
+    }
+}
+
+void JuegoGUI::actualizarMovimiento(int jugadorIndex, int posicionAnterior, int nuevaPosicion) {
+    if (juegoIniciado && juego) {
+        string movimiento = "Jugador " + to_string(jugadorIndex + 1) + 
+                           " se mueve de " + to_string(posicionAnterior) + 
+                           " a " + to_string(nuevaPosicion);
+        agregarAlHistorial(movimiento);
+    }
+}
+
+void JuegoGUI::mostrarGanador(const string& nombreGanador) {
+    if (juegoIniciado) {
+        string mensajeGanador = "🎉 ¡" + nombreGanador + " HA GANADO! 🎉";
+        mostrarMensaje(mensajeGanador);
+        agregarAlHistorial(mensajeGanador);
     }
 } 

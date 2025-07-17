@@ -1,10 +1,12 @@
 #include "Jugador.h"
 
-Jugador::Jugador(const std::string& nombre) 
+using namespace std;
+
+Jugador::Jugador(const string& nombre)
     : nombre(nombre), posicion(0), turnosPerdidos(0), enPozo(false) {
 }
 
-std::string Jugador::conseguirNombre() const {
+string Jugador::conseguirNombre() const {
     return nombre;
 }
 
@@ -37,7 +39,6 @@ void Jugador::salirPozo() {
 }
 
 void Jugador::reducirTurnosPerdidos() {
-    // Error típico: no verificar si hay turnos perdidos
     turnosPerdidos--;
 }
 

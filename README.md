@@ -8,7 +8,23 @@ Este proyecto implementa el juego de la Oca con todas sus reglas tradicionales:
 - Tablero de 63 casillas
 - Casillas especiales con efectos únicos
 - Sistema de turnos y penalizaciones
-- Interfaz de consola interactiva
+- **Interfaz unificada**: Una sola lógica para consola y gráfico
+
+## Arquitectura Unificada
+
+El proyecto ahora usa una **arquitectura unificada** donde:
+
+- **`Juego`** es la clase principal que contiene toda la lógica del juego
+- **`JuegoGUI`** es una interfaz gráfica que se conecta con `Juego` usando el patrón Observer
+- **No hay duplicación** de lógica entre consola y gráfico
+- **Una sola fuente de verdad** para las reglas del juego
+
+### Ventajas de esta Arquitectura:
+
+1. **Mantenimiento más fácil**: Los cambios en las reglas solo se hacen en `Juego`
+2. **Consistencia**: Ambos modos (consola y gráfico) usan exactamente la misma lógica
+3. **Extensibilidad**: Fácil agregar nuevas interfaces (web, móvil, etc.)
+4. **Testing**: Se puede probar la lógica independientemente de la interfaz
 
 ## Casillas Especiales
 
@@ -106,11 +122,21 @@ El proyecto usa Programación Orientada a Objetos:
 - Composición: El juego contiene jugadores, dado y tablero
 
 ### Clases Principales
-- Juego: Controla el flujo del juego
-- Jugador: Maneja el estado de cada jugador
-- Dado: Genera números aleatorios
-- Tablero: Contiene las casillas
-- Casilla: Clase base para casillas especiales
+- **Juego**: Controla el flujo del juego y contiene toda la lógica
+- **Jugador**: Maneja el estado de cada jugador
+- **Dado**: Genera números aleatorios
+- **Tablero**: Contiene las casillas
+- **Casilla**: Clase base para casillas especiales
+- **JuegoGUI**: Interfaz gráfica que se conecta con Juego
+
+### Patrón Observer
+
+La comunicación entre `Juego` y `JuegoGUI` se hace mediante el **patrón Observer**:
+
+- `Juego` notifica a `JuegoGUI` sobre cambios importantes
+- `JuegoGUI` se actualiza automáticamente cuando cambia el estado del juego
+- Esto permite animaciones y actualizaciones en tiempo real
+- La lógica del juego está completamente separada de la presentación
 
 ## Reglas del Juego
 

@@ -3,26 +3,33 @@
 #include <limits>
 #include <algorithm>
 
-Juego::Juego(const std::vector<std::string>& nombresJugadores) 
+using namespace std;
+
+Juego::Juego(const vector<string>& nombresJugadores) 
     : cantidadJugadores(nombresJugadores.size()), 
       finDelJuego(false), 
       jugadorActual(0), 
-      turnoExtra(false) {
+      turnoExtra(false),
+      gui(nullptr) {
     
     // Crear jugadores
     for (const auto& nombre : nombresJugadores) {
         jugadores.emplace_back(nombre);
     }
     
-    // Crear dado y tablero - esto es para POO
-    dado = std::make_unique<Dado>();
-    tablero = std::make_unique<Tablero>();
+    // Crear dado y tablero 
+    dado = make_unique<Dado>();
+    tablero = make_unique<Tablero>();
     
-    std::cout << "Juego creado con " << cantidadJugadores << " jugadores" << std::endl;
+    cout << "Juego creado con " << cantidadJugadores << " jugadores" << endl;
+}
+
+Juego::~Juego() {
+    // El destructor se encarga de limpiar automáticamente
 }
 
 void Juego::iniciarJuego() {
-    std::cout << "\n=== ¡COMIENZA EL JUEGO DE LA OCA! ===" << std::endl;
+    cout << "\n=== ¡COMIENZA EL JUEGO DE LA OCA! ===" << endl;
     
     while (!finDelJuego) {
         mostrarEstadoJuego();
@@ -30,11 +37,11 @@ void Juego::iniciarJuego() {
         if (jugadores[jugadorActual].puedeJugar()) {
             jugarTurno();
         } else {
-            std::cout << jugadores[jugadorActual].conseguirNombre() << " no puede jugar este turno." << std::endl;
+            cout << jugadores[jugadorActual].conseguirNombre() << " no puede jugar este turno." << endl;
             if (jugadores[jugadorActual].estaEnPozo()) {
-                std::cout << "Está atrapado en el pozo." << std::endl;
+                cout << "Está atrapado en el pozo." << endl;
             } else {
-                std::cout << "Pierde " << jugadores[jugadorActual].getTurnosPerdidos() << " turnos." << std::endl;
+                cout << "Pierde " << jugadores[jugadorActual].getTurnosPerdidos() << " turnos." << endl;
                 jugadores[jugadorActual].reducirTurnosPerdidos();
             }
             pasarTurno();
@@ -42,7 +49,7 @@ void Juego::iniciarJuego() {
         
         if (verificarGanador()) {
             finDelJuego = true;
-            std::cout << "\n🎉 ¡" << jugadores[jugadorActual].conseguirNombre() << " HA GANADO! 🎉" << std::endl;
+            cout << "\n🎉 ¡" << jugadores[jugadorActual].conseguirNombre() << " HA GANADO! 🎉" << endl;
         }
     }
 }
@@ -50,12 +57,12 @@ void Juego::iniciarJuego() {
 void Juego::jugarTurno() {
     Jugador& jugador = jugadores[jugadorActual];
     
-    std::cout << "\n--- Turno de " << jugador.conseguirNombre() << " ---" << std::endl;
-    std::cout << "Presiona Enter para lanzar el dado...";
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    cout << "\n--- Turno de " << jugador.conseguirNombre() << " ---" << endl;
+    cout << "Presiona Enter para lanzar el dado...";
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
     
     int resultadoDado = dado->lanzar(); // lanzar dado
-    std::cout << "Has sacado un " << resultadoDado << std::endl;
+    cout << "Has sacado un " << resultadoDado << endl;
     
     int posicionActual = jugador.conseguirPosicion();
     int nuevaPosicion = posicionActual + resultadoDado;
@@ -64,7 +71,7 @@ void Juego::jugarTurno() {
     if (nuevaPosicion > 63) {
         int exceso = nuevaPosicion - 63;
         nuevaPosicion = 63 - exceso;
-        std::cout << "Te has pasado de la meta. Retrocedes " << exceso << " casillas." << std::endl;
+        cout << "Te has pasado de la meta. Retrocedes " << exceso << " casillas." << endl;
     }
     
     procesarMovimiento(jugadorActual, nuevaPosicion);
@@ -73,7 +80,7 @@ void Juego::jugarTurno() {
     Casilla* casilla = tablero->obtenerCasilla(nuevaPosicion);
     if (casilla && casilla->getNombre() == "Oca") {
         turnoExtra = true;
-        std::cout << "¡Turno extra por caer en oca!" << std::endl;
+        cout << "¡Turno extra por caer en oca!" << endl;
     } else {
         turnoExtra = false;
         pasarTurno();
@@ -85,22 +92,22 @@ bool Juego::verificarGanador() const {
 }
 
 void Juego::mostrarEstadoJuego() const {
-    std::cout << "\n=== ESTADO DEL JUEGO ===" << std::endl;
+    cout << "\n=== ESTADO DEL JUEGO ===" << endl;
     for (size_t i = 0; i < jugadores.size(); i++) {
         const Jugador& jugador = jugadores[i];
-        std::cout << (i == jugadorActual ? "→ " : "  ") 
+        cout << (i == jugadorActual ? "→ " : "  ") 
                   << jugador.conseguirNombre() 
                   << ": Casilla " << jugador.conseguirPosicion();
         
         if (jugador.estaEnPozo()) {
-            std::cout << " (EN POZO)";
+            cout << " (EN POZO)";
         }
         if (jugador.getTurnosPerdidos() > 0) {
-            std::cout << " (Pierde " << jugador.getTurnosPerdidos() << " turnos)";
+            cout << " (Pierde " << jugador.getTurnosPerdidos() << " turnos)";
         }
-        std::cout << std::endl;
+        cout << endl;
     }
-    std::cout << "========================" << std::endl;
+    cout << "========================" << endl;
 }
 
 void Juego::procesarMovimiento(int jugadorIndex, int nuevaPosicion) {
@@ -111,7 +118,7 @@ void Juego::procesarMovimiento(int jugadorIndex, int nuevaPosicion) {
     if (nuevaPosicion != 31) { // El pozo permite múltiples jugadores
         for (size_t i = 0; i < jugadores.size(); i++) {
             if (i != jugadorIndex && jugadores[i].conseguirPosicion() == nuevaPosicion) {
-                std::cout << "¡Hay otro jugador en esa casilla! No puedes moverte." << std::endl;
+                cout << "¡Hay otro jugador en esa casilla! No puedes moverte." << endl;
                 return;
             }
         }
@@ -119,8 +126,8 @@ void Juego::procesarMovimiento(int jugadorIndex, int nuevaPosicion) {
     
     // Mover al jugador
     jugador.moverJugador(nuevaPosicion);
-    std::cout << jugador.conseguirNombre() << " se mueve de la casilla " 
-              << posicionAnterior << " a la casilla " << nuevaPosicion << std::endl;
+    cout << jugador.conseguirNombre() << " se mueve de la casilla " 
+              << posicionAnterior << " a la casilla " << nuevaPosicion << endl;
     
     // Aplicar efecto de la casilla
     Casilla* casilla = tablero->obtenerCasilla(nuevaPosicion);
@@ -138,13 +145,13 @@ void Juego::liberarJugadoresDelPozo(int jugadorQueCayo) {
     for (size_t i = 0; i < jugadores.size(); i++) {
         if (i != jugadorQueCayo && jugadores[i].estaEnPozo()) {
             jugadores[i].salirPozo();
-            std::cout << jugadores[i].conseguirNombre() << " ha sido liberado del pozo." << std::endl;
+            cout << jugadores[i].conseguirNombre() << " ha sido liberado del pozo." << endl;
         }
     }
 }
 
 bool Juego::hayJugadoresEnPozo() const {
-    return std::any_of(jugadores.begin(), jugadores.end(), 
+    return any_of(jugadores.begin(), jugadores.end(), 
                       [](const Jugador& jugador) { return jugador.estaEnPozo(); });
 }
 
@@ -176,24 +183,83 @@ bool Juego::estaJugando() const {
 }
 
 // Nuevo método para la GUI
-std::pair<int, std::string> Juego::lanzarDadoYJugarTurno() {
+pair<int, string> Juego::lanzarDadoYJugarTurno() {
+    // Verificar si el jugador puede jugar
+    if (!jugadores[jugadorActual].puedeJugar()) {
+        string mensaje = jugadores[jugadorActual].conseguirNombre() + " no puede jugar este turno.";
+        if (jugadores[jugadorActual].estaEnPozo()) {
+            mensaje += " Está atrapado en el pozo.";
+        } else {
+            mensaje += " Pierde " + to_string(jugadores[jugadorActual].getTurnosPerdidos()) + " turnos.";
+            jugadores[jugadorActual].reducirTurnosPerdidos();
+        }
+        pasarTurno();
+        return {0, mensaje};
+    }
+    
     int resultado = dado->lanzar();
     int posInicial = jugadores[jugadorActual].conseguirPosicion();
     int nuevaPos = posInicial + resultado;
+    
     // Rebote si se pasa de la meta
     if (nuevaPos > 63) {
         int exceso = nuevaPos - 63;
         nuevaPos = 63 - exceso;
     }
-    std::string movimiento = jugadores[jugadorActual].conseguirNombre() +
-        " se mueve de la casilla " + std::to_string(posInicial) +
-        " a la casilla " + std::to_string(nuevaPos);
+    
+    string movimiento = jugadores[jugadorActual].conseguirNombre() +
+        " se mueve de la casilla " + to_string(posInicial) +
+        " a la casilla " + to_string(nuevaPos);
+    
     procesarMovimiento(jugadorActual, nuevaPos);
+    
     // Obtener descripción de la casilla
     Casilla* casilla = tablero->obtenerCasilla(jugadores[jugadorActual].conseguirPosicion());
-    std::string desc = casilla ? casilla->getDescripcion() : "";
+    string desc = casilla ? casilla->getDescripcion() : "";
     if (!desc.empty()) {
         movimiento += "\n" + desc;
     }
+    
+    // Verificar si es casilla de oca para turno extra
+    if (casilla && casilla->getNombre() == "Oca") {
+        turnoExtra = true;
+        movimiento += "\n¡Turno extra por caer en oca!";
+    } else {
+        turnoExtra = false;
+        pasarTurno();
+    }
+    
+    // Verificar ganador
+    if (verificarGanador()) {
+        finDelJuego = true;
+        movimiento += "\n🎉 ¡" + jugadores[jugadorActual].conseguirNombre() + " HA GANADO! 🎉";
+    }
+    
     return {resultado, movimiento};
+}
+
+// Métodos para conectar con la interfaz gráfica
+void Juego::setGUI(JuegoGUI* interfaz) {
+    gui = interfaz;
+}
+
+void Juego::notificarCambioTurno() {
+    if (gui) {
+        // La GUI se actualizará automáticamente
+        // Este método permite notificaciones específicas si es necesario
+    }
+}
+
+void Juego::notificarMovimiento(int jugadorIndex, int posicionAnterior, int nuevaPosicion) {
+    if (gui) {
+        // Notificar a la GUI sobre el movimiento
+        // Esto permite animaciones o actualizaciones específicas
+    }
+}
+
+void Juego::notificarGanador(const string& nombreGanador) {
+    if (gui) {
+        // Notificar a la GUI sobre el ganador
+        // Esto permite mostrar una pantalla de victoria especial
+    }
 } 

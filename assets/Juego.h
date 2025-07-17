@@ -7,19 +7,29 @@
 #include "Tablero.h"
 #include <iostream>
 
+using namespace std;
+
+// Forward declaration para evitar dependencias circulares
+class JuegoGUI;
+
 class Juego {
 private:
-    std::vector<Jugador> jugadores;
-    std::unique_ptr<Dado> dado;
-    std::unique_ptr<Tablero> tablero;
+    vector<Jugador> jugadores;
+    unique_ptr<Dado> dado;
+    unique_ptr<Tablero> tablero;
     int cantidadJugadores;
     bool finDelJuego;
     int jugadorActual;
     bool turnoExtra;
+    
+    // Referencia a la interfaz gráfica (opcional)
+    JuegoGUI* gui;
 
 public:
-    Juego(const std::vector<std::string>& nombresJugadores);
+    Juego(const vector<string>& nombresJugadores);
+    ~Juego();
     
+    // Métodos principales del juego
     void iniciarJuego();
     void jugarTurno();
     bool verificarGanador() const;
@@ -29,12 +39,16 @@ public:
     bool hayJugadoresEnPozo() const;
     void pasarTurno();
     
-    // Métodos para la interfaz gráfica
+    // Métodos de acceso
     const Jugador& obtenerJugador(int index) const;
     int obtenerCantidadJugadores() const;
     int obtenerJugadorActual() const;
     bool estaJugando() const;
-
-    // Nuevo método para la GUI
-    std::pair<int, std::string> lanzarDadoYJugarTurno();
+    pair<int, string> lanzarDadoYJugarTurno();
+    
+    // Métodos para conectar con la interfaz gráfica
+    void setGUI(JuegoGUI* interfaz);
+    void notificarCambioTurno();
+    void notificarMovimiento(int jugadorIndex, int posicionAnterior, int nuevaPosicion);
+    void notificarGanador(const string& nombreGanador);
 }; 

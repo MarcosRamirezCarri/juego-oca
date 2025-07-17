@@ -1,6 +1,8 @@
 #include "Tablero.h"
 #include <iostream>
 
+using namespace std;
+
 Tablero::Tablero() {
     inicializarCasillas();
 }
@@ -10,27 +12,27 @@ void Tablero::inicializarCasillas() {
     
     // Inicializar todas las casillas como normales
     for (int i = 1; i <= NUMERO_CASILLAS; i++) {
-        casillas[i] = std::make_unique<CasillaNormal>(i);
+        casillas[i] = make_unique<CasillaNormal>(i);
     }
     
     // Configurar casillas especiales
-    casillas[6] = std::make_unique<CasillaPuente>();
-    casillas[9] = std::make_unique<CasillaOca>(9);
-    casillas[12] = std::make_unique<CasillaPosada>(); // Posada en casilla 12
-    casillas[18] = std::make_unique<CasillaOca>(18);
-    casillas[19] = std::make_unique<CasillaPosada>(); // Posada en casilla 19
-    casillas[27] = std::make_unique<CasillaOca>(27);
-    casillas[30] = std::make_unique<CasillaNormal>(30); // Casilla normal (destino del laberinto)
-    casillas[31] = std::make_unique<CasillaPozo>();
-    casillas[36] = std::make_unique<CasillaOca>(36);
-    casillas[42] = std::make_unique<CasillaLaberinto>();
-    casillas[45] = std::make_unique<CasillaOca>(45);
-    casillas[54] = std::make_unique<CasillaOca>(54);
-    casillas[56] = std::make_unique<CasillaCarcel>();
-    casillas[58] = std::make_unique<CasillaCalavera>();
-    casillas[63] = std::make_unique<CasillaJardin>();
+    casillas[6] = make_unique<CasillaPuente>();
+    casillas[9] = make_unique<CasillaOca>(9);
+    casillas[12] = make_unique<CasillaPosada>(); // Posada en casilla 12
+    casillas[18] = make_unique<CasillaOca>(18);
+    casillas[19] = make_unique<CasillaPosada>(); // Posada en casilla 19
+    casillas[27] = make_unique<CasillaOca>(27);
+    casillas[30] = make_unique<CasillaNormal>(30); // Casilla normal (destino del laberinto)
+    casillas[31] = make_unique<CasillaPozo>();
+    casillas[36] = make_unique<CasillaOca>(36);
+    casillas[42] = make_unique<CasillaLaberinto>();
+    casillas[45] = make_unique<CasillaOca>(45);
+    casillas[54] = make_unique<CasillaOca>(54);
+    casillas[56] = make_unique<CasillaCarcel>();
+    casillas[58] = make_unique<CasillaCalavera>();
+    casillas[63] = make_unique<CasillaJardin>();
     
-    std::cout << "Tablero inicializado con " << NUMERO_CASILLAS << " casillas" << std::endl;
+    cout << "Tablero inicializado con " << NUMERO_CASILLAS << " casillas" << endl;
 }
 
 Casilla* Tablero::obtenerCasilla(int numero) const {
