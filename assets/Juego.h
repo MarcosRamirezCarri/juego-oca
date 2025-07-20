@@ -1,50 +1,58 @@
 #pragma once
 
 #include <vector>
+#include <string>
 #include <memory>
 #include "Jugador.h"
+#include "Casilla.h"
 #include "Dado.h"
-#include "Tablero.h"
-#include <iostream>
 
-using namespace std;
+// Estructura simple para reemplazar std::pair
+struct ResultadoTurno {
+    int resultadoDado;
+    string descripcion;
+    
+    ResultadoTurno(int dado, const string& desc) 
+        : resultadoDado(dado), descripcion(desc) {}
+};
 
-// Forward declaration para evitar dependencias circulares
-class JuegoGUI;
+class JuegoGUI; // Forward declaration
 
 class Juego {
 private:
     vector<Jugador> jugadores;
+    vector<unique_ptr<Casilla>> casillas;  // Casillas directamente en Juego
     unique_ptr<Dado> dado;
-    unique_ptr<Tablero> tablero;
     int cantidadJugadores;
-    bool finDelJuego;
     int jugadorActual;
+    bool finDelJuego;
     bool turnoExtra;
-    
-    // Referencia a la interfaz gráfica (opcional)
     JuegoGUI* gui;
+    
+    // Métodos privados para manejar el tablero
+    void inicializarCasillas();
+    Casilla* obtenerCasilla(int numero) const;
 
 public:
     Juego(const vector<string>& nombresJugadores);
     ~Juego();
     
-    // Métodos principales del juego
     void iniciarJuego();
     void jugarTurno();
     bool verificarGanador() const;
-    void mostrarEstadoJuego() const;
     void procesarMovimiento(int jugadorIndex, int nuevaPosicion);
     void liberarJugadoresDelPozo(int jugadorQueCayo);
     bool hayJugadoresEnPozo() const;
     void pasarTurno();
     
-    // Métodos de acceso
+    // Métodos para la interfaz gráfica
     const Jugador& obtenerJugador(int index) const;
     int obtenerCantidadJugadores() const;
     int obtenerJugadorActual() const;
     bool estaJugando() const;
-    pair<int, string> lanzarDadoYJugarTurno();
+    
+    // Metodo para lanzar el dado, jugar el turno y devolver el resultado
+    ResultadoTurno lanzarDadoYJugarTurno();
     
     // Métodos para conectar con la interfaz gráfica
     void setGUI(JuegoGUI* interfaz);

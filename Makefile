@@ -1,7 +1,7 @@
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Iassets
 TARGET = juego_oca
-SOURCES = src/main.cpp src/Dado.cpp src/Jugador.cpp src/Casilla.cpp src/Tablero.cpp src/Juego.cpp
+SOURCES = src/main.cpp src/Dado.cpp src/Jugador.cpp src/Casilla.cpp src/Juego.cpp
 OBJECTS = $(SOURCES:src/%.cpp=%.o)
 
 all: $(TARGET)

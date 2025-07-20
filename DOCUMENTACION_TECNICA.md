@@ -200,10 +200,8 @@ std::unique_ptr<Tablero> tablero;
 auto [resultado, desc] = juego->lanzarDadoYJugarTurno();
 ```
 **Ventajas:**
-- **Legibilidad**: Acceso directo a elementos de tuplas/pairs
 - **Menos verboso**: No requiere `.first` y `.second`
 - **Nombres descriptivos**: Variables con nombres significativos
-- **Prevención de errores**: No confusión entre elementos del pair
 
 ### 11.2 Comparación con Código Rudimentario
 

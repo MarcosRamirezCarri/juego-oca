@@ -24,6 +24,7 @@ private:
     // Jugadores
     vector<sf::CircleShape> fichasJugadores;
     vector<sf::Text> nombresJugadores;
+    vector<sf::Text> inicialesJugadores;  // Iniciales en las fichas
     
     // Elementos de UI
     sf::Text tituloJuego;

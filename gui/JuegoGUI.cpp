@@ -49,7 +49,7 @@ JuegoGUI::JuegoGUI()
     // Botón del dado
     botonDado.setSize(sf::Vector2f(120, 50));
     botonDado.setFillColor(sf::Color(70, 130, 180));
-    botonDado.setPosition(ANCHO_VENTANA - 500, 200);
+    botonDado.setPosition(ANCHO_VENTANA - 900, 100);
     
     textoBotonDado.setFont(font);
     textoBotonDado.setString("LANZAR DADO");
@@ -121,7 +121,7 @@ JuegoGUI::JuegoGUI()
 void JuegoGUI::ejecutar() {
     while (window.isOpen()) {
         procesarEventos();
-        actualizarJuego();
+
         
         window.clear(COLOR_FONDO);
         dibujarTablero();
@@ -139,6 +139,7 @@ void JuegoGUI::inicializarJuego(const vector<string>& nombres) {
     // Inicializar fichas de jugadores
     fichasJugadores.clear();
     nombresJugadores.clear();
+    inicialesJugadores.clear();
     
     vector<sf::Color> coloresFichas = {
         sf::Color::Red,
@@ -152,8 +153,19 @@ void JuegoGUI::inicializarJuego(const vector<string>& nombres) {
         sf::CircleShape ficha(15);
         ficha.setFillColor(coloresFichas[i % coloresFichas.size()]);
         ficha.setOutlineThickness(2);
+        
         ficha.setOutlineColor(sf::Color::Black);
         fichasJugadores.push_back(ficha);
+        
+        // Inicial del jugador en la ficha
+        sf::Text inicial;
+        inicial.setFont(font);
+        inicial.setString(string(1, nombres[i][0])); // Primera letra del nombre
+        inicial.setCharacterSize(12);
+        inicial.setFillColor(sf::Color::Black);
+        inicial.setStyle(sf::Text::Bold);
+        // La posición se ajustará en dibujarJugadores()
+        inicialesJugadores.push_back(inicial);
         
         // Nombre del jugador
         sf::Text nombre ;
@@ -161,7 +173,7 @@ void JuegoGUI::inicializarJuego(const vector<string>& nombres) {
         nombre.setString(nombres[i]);
         nombre.setCharacterSize(20);
         nombre.setFillColor(coloresFichas[i % coloresFichas.size()]);
-        nombre.setPosition(ANCHO_VENTANA - 500, 300 + i * 30);
+        nombre.setPosition(ANCHO_VENTANA - 500, 250 + i * 30);
         nombresJugadores.push_back(nombre);
     }
     
@@ -195,6 +207,16 @@ void JuegoGUI::dibujarJugadores() {
         
         fichasJugadores[i].setPosition(pos.x + 5, pos.y + 5);
         window.draw(fichasJugadores[i]);
+        
+        // Posicionar y dibujar la inicial centrada en la ficha
+        sf::FloatRect fichaBounds = fichasJugadores[i].getGlobalBounds();
+        sf::FloatRect textoBounds = inicialesJugadores[i].getGlobalBounds();
+        
+        float x = fichaBounds.left + (fichaBounds.width - textoBounds.width) / 2;
+        float y = fichaBounds.top + (fichaBounds.height - textoBounds.height) / 2;
+        
+        inicialesJugadores[i].setPosition(x, y);
+        window.draw(inicialesJugadores[i]);
     }
     
     // Dibujar nombres de jugadores con sus posiciones actuales
@@ -266,10 +288,10 @@ void JuegoGUI::procesarEventos() {
                 if (botonDado.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
                     if (juegoIniciado && juego->estaJugando()) {
                         // Usar la lógica real del juego
-                        auto [resultado, desc] = juego->lanzarDadoYJugarTurno();
-                        textoDado.setString("Dado: " + to_string(resultado));
-                        mostrarMensaje(desc);
-                        agregarAlHistorial(desc);
+                        ResultadoTurno resultado = juego->lanzarDadoYJugarTurno();
+                        textoDado.setString("Dado: " + to_string(resultado.resultadoDado));
+                        mostrarMensaje(resultado.descripcion);
+                        agregarAlHistorial(resultado.descripcion);
                         
                         // Actualizar el texto del turno con información del estado
                         int actual = juego->obtenerJugadorActual();
@@ -291,9 +313,6 @@ void JuegoGUI::procesarEventos() {
     }
 }
 
-void JuegoGUI::actualizarJuego() {
-    // Aquí se actualizaría la lógica del juego
-}
 
 void JuegoGUI::mostrarMensaje(const string& mensaje) {
     textoMensaje.setString(mensaje);
@@ -308,7 +327,7 @@ sf::Vector2f JuegoGUI::obtenerPosicionCasilla(int numeroCasilla) {
     if (fila % 2 == 1) {
         columna = COLUMNAS_TABLERO - 1 - columna;
     }
-    
+
     float x = MARGEN + columna * TAMANO_CASILLA;
     float y = ALTO_VENTANA - MARGEN - (fila + 1) * TAMANO_CASILLA;
     

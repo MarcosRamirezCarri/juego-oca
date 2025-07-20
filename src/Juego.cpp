@@ -17,11 +17,11 @@ Juego::Juego(const vector<string>& nombresJugadores)
         jugadores.emplace_back(nombre);
     }
     
-    // Crear dado y tablero 
+    // Crear dado e inicializar casillas
     dado = make_unique<Dado>();
-    tablero = make_unique<Tablero>();
+    inicializarCasillas();
     
-    cout << "Juego creado con " << cantidadJugadores << " jugadores" << endl;
+    
 }
 
 Juego::~Juego() {
@@ -29,10 +29,9 @@ Juego::~Juego() {
 }
 
 void Juego::iniciarJuego() {
-    cout << "\n=== ¡COMIENZA EL JUEGO DE LA OCA! ===" << endl;
     
     while (!finDelJuego) {
-        mostrarEstadoJuego();
+       
         
         if (jugadores[jugadorActual].puedeJugar()) {
             jugarTurno();
@@ -57,12 +56,9 @@ void Juego::iniciarJuego() {
 void Juego::jugarTurno() {
     Jugador& jugador = jugadores[jugadorActual];
     
-    cout << "\n--- Turno de " << jugador.conseguirNombre() << " ---" << endl;
-    cout << "Presiona Enter para lanzar el dado...";
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    
     
     int resultadoDado = dado->lanzar(); // lanzar dado
-    cout << "Has sacado un " << resultadoDado << endl;
     
     int posicionActual = jugador.conseguirPosicion();
     int nuevaPosicion = posicionActual + resultadoDado;
@@ -71,16 +67,16 @@ void Juego::jugarTurno() {
     if (nuevaPosicion > 63) {
         int exceso = nuevaPosicion - 63;
         nuevaPosicion = 63 - exceso;
-        cout << "Te has pasado de la meta. Retrocedes " << exceso << " casillas." << endl;
+        
     }
     
     procesarMovimiento(jugadorActual, nuevaPosicion);
     
     // Verificar si es casilla de oca para turno extra
-    Casilla* casilla = tablero->obtenerCasilla(nuevaPosicion);
+    Casilla* casilla = obtenerCasilla(nuevaPosicion);
     if (casilla && casilla->getNombre() == "Oca") {
         turnoExtra = true;
-        cout << "¡Turno extra por caer en oca!" << endl;
+        
     } else {
         turnoExtra = false;
         pasarTurno();
@@ -89,25 +85,6 @@ void Juego::jugarTurno() {
 
 bool Juego::verificarGanador() const {
     return jugadores[jugadorActual].conseguirPosicion() == 63;
-}
-
-void Juego::mostrarEstadoJuego() const {
-    cout << "\n=== ESTADO DEL JUEGO ===" << endl;
-    for (size_t i = 0; i < jugadores.size(); i++) {
-        const Jugador& jugador = jugadores[i];
-        cout << (i == jugadorActual ? "→ " : "  ") 
-                  << jugador.conseguirNombre() 
-                  << ": Casilla " << jugador.conseguirPosicion();
-        
-        if (jugador.estaEnPozo()) {
-            cout << " (EN POZO)";
-        }
-        if (jugador.getTurnosPerdidos() > 0) {
-            cout << " (Pierde " << jugador.getTurnosPerdidos() << " turnos)";
-        }
-        cout << endl;
-    }
-    cout << "========================" << endl;
 }
 
 void Juego::procesarMovimiento(int jugadorIndex, int nuevaPosicion) {
@@ -130,7 +107,7 @@ void Juego::procesarMovimiento(int jugadorIndex, int nuevaPosicion) {
               << posicionAnterior << " a la casilla " << nuevaPosicion << endl;
     
     // Aplicar efecto de la casilla
-    Casilla* casilla = tablero->obtenerCasilla(nuevaPosicion);
+    Casilla* casilla = obtenerCasilla(nuevaPosicion);
     if (casilla) {
         casilla->accionJugador(jugador);
     }
@@ -183,7 +160,7 @@ bool Juego::estaJugando() const {
 }
 
 // Nuevo método para la GUI
-pair<int, string> Juego::lanzarDadoYJugarTurno() {
+ResultadoTurno Juego::lanzarDadoYJugarTurno() {
     // Verificar si el jugador puede jugar
     if (!jugadores[jugadorActual].puedeJugar()) {
         string mensaje = jugadores[jugadorActual].conseguirNombre() + " no puede jugar este turno.";
@@ -194,7 +171,7 @@ pair<int, string> Juego::lanzarDadoYJugarTurno() {
             jugadores[jugadorActual].reducirTurnosPerdidos();
         }
         pasarTurno();
-        return {0, mensaje};
+        return ResultadoTurno(0, mensaje);
     }
     
     int resultado = dado->lanzar();
@@ -211,16 +188,16 @@ pair<int, string> Juego::lanzarDadoYJugarTurno() {
         " se mueve de la casilla " + to_string(posInicial) +
         " a la casilla " + to_string(nuevaPos);
     
-    procesarMovimiento(jugadorActual, nuevaPos);
-    
-    // Obtener descripción de la casilla
-    Casilla* casilla = tablero->obtenerCasilla(jugadores[jugadorActual].conseguirPosicion());
+    // Obtener descripción de la casilla ANTES del movimiento
+    Casilla* casilla = obtenerCasilla(nuevaPos);
     string desc = casilla ? casilla->getDescripcion() : "";
     if (!desc.empty()) {
         movimiento += "\n" + desc;
     }
     
-    // Verificar si es casilla de oca para turno extra
+    procesarMovimiento(jugadorActual, nuevaPos);
+    
+    // Verificar si es casilla de oca para turno extra (usando la casilla original)
     if (casilla && casilla->getNombre() == "Oca") {
         turnoExtra = true;
         movimiento += "\n¡Turno extra por caer en oca!";
@@ -235,7 +212,7 @@ pair<int, string> Juego::lanzarDadoYJugarTurno() {
         movimiento += "\n🎉 ¡" + jugadores[jugadorActual].conseguirNombre() + " HA GANADO! 🎉";
     }
     
-    return {resultado, movimiento};
+    return ResultadoTurno(resultado, movimiento);
 }
 
 // Métodos para conectar con la interfaz gráfica
@@ -262,4 +239,38 @@ void Juego::notificarGanador(const string& nombreGanador) {
         // Notificar a la GUI sobre el ganador
         // Esto permite mostrar una pantalla de victoria especial
     }
+}
+
+// Métodos privados para manejar las casillas
+void Juego::inicializarCasillas() {
+    casillas.resize(64); // Casillas del 1 al 63 (índice 0 no se usa)
+    
+    // Inicializar todas las casillas como normales
+    for (int i = 1; i <= 63; i++) {
+        casillas[i] = make_unique<CasillaNormal>(i);
+    }
+    
+    // Configurar casillas especiales
+    casillas[6] = make_unique<CasillaPuente>();
+    casillas[9] = make_unique<CasillaOca>(9);
+    casillas[12] = make_unique<CasillaPosada>(); // Posada en casilla 12
+    casillas[18] = make_unique<CasillaOca>(18);
+    casillas[19] = make_unique<CasillaPosada>(); // Posada en casilla 19
+    casillas[27] = make_unique<CasillaOca>(27);
+    casillas[30] = make_unique<CasillaNormal>(30); // Casilla normal (destino del laberinto)
+    casillas[31] = make_unique<CasillaPozo>();
+    casillas[36] = make_unique<CasillaOca>(36);
+    casillas[42] = make_unique<CasillaLaberinto>();
+    casillas[45] = make_unique<CasillaOca>(45);
+    casillas[54] = make_unique<CasillaOca>(54);
+    casillas[56] = make_unique<CasillaCarcel>();
+    casillas[58] = make_unique<CasillaCalavera>();
+    casillas[63] = make_unique<CasillaJardin>();
+}
+
+Casilla* Juego::obtenerCasilla(int numero) const {
+    if (numero >= 1 && numero <= 63) {
+        return casillas[numero].get();
+    }
+    return nullptr;
 } 

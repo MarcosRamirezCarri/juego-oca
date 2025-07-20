@@ -14,7 +14,7 @@ int main() {
         JuegoGUI gui;
         
         // Configurar jugadores (por ahora hardcodeados)
-        vector<string> nombresJugadores = {"Ana", "Carlos", "María"};
+        vector<string> nombresJugadores = {"Marcos", "Valen", "Lucas", "Bauti"};
         
         // Inicializar el juego con la interfaz gráfica
         gui.inicializarJuego(nombresJugadores);
