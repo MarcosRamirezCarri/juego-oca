@@ -32,9 +32,9 @@ JuegoGUI::JuegoGUI()
     tituloJuego.setPosition(ANCHO_VENTANA / 2 - tituloJuego.getGlobalBounds().width / 2, 10);
     
     textoJugadorActual.setFont(font);
-    textoJugadorActual.setCharacterSize(20);
+    textoJugadorActual.setCharacterSize(28);
     textoJugadorActual.setFillColor(sf::Color::White);
-    textoJugadorActual.setPosition(ANCHO_VENTANA - 500, 50);
+    textoJugadorActual.setPosition(ANCHO_VENTANA - 1150, 100);
     
     textoDado.setFont(font);
     textoDado.setCharacterSize(24);
@@ -265,7 +265,7 @@ void JuegoGUI::dibujarUI() {
     tHist.setPosition(ANCHO_VENTANA - 500, yHist);
     tHist.setString("Historial:");
     window.draw(tHist);
-    yHist += 28;
+    yHist += 30;
     for (const auto& linea : historial) {
         tHist.setString(linea);
         tHist.setPosition(ANCHO_VENTANA - 500, yHist);
@@ -352,16 +352,16 @@ void JuegoGUI::actualizarTurno() {
 
 void JuegoGUI::actualizarMovimiento(int jugadorIndex, int posicionAnterior, int nuevaPosicion) {
     if (juegoIniciado && juego) {
-        string movimiento = "Jugador " + to_string(jugadorIndex + 1) + 
-                           " se mueve de " + to_string(posicionAnterior) + 
-                           " a " + to_string(nuevaPosicion);
+        string movimiento = u8"Jugador " + to_string(jugadorIndex + 1) + 
+                           u8" se mueve de " + to_string(posicionAnterior) + 
+                           u8" a " + to_string(nuevaPosicion);
         agregarAlHistorial(movimiento);
     }
 }
 
 void JuegoGUI::mostrarGanador(const string& nombreGanador) {
     if (juegoIniciado) {
-        string mensajeGanador = "🎉 ¡" + nombreGanador + " HA GANADO! 🎉";
+        string mensajeGanador = u8"🎉 ¡" + nombreGanador + " HA GANADO! 🎉";
         mostrarMensaje(mensajeGanador);
         agregarAlHistorial(mensajeGanador);
     }

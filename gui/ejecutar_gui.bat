@@ -1,11 +1,11 @@
 @echo off
-echo === JUEGO DE LA OCA - VERSION GRAFICA ===
+REM === JUEGO DE LA OCA - VERSION GRAFICA (WINDOWS) ===
+echo === JUEGO DE LA OCA - VERSION GRAFICA (WINDOWS) ===
 echo.
 
-echo Verificando si SFML esta instalado...
-where sfml-config >nul 2>&1
-if %errorlevel% neq 0 (
-    echo SFML no esta instalado.
+REM Verifica que C:\SFML existe
+if not exist "C:\SFML" (
+    echo No se encontro la carpeta C:\SFML.
     echo Por favor instala SFML manualmente:
     echo 1. Descarga SFML desde https://www.sfml-dev.org/download.php
     echo 2. Extrae en C:\SFML
@@ -13,7 +13,7 @@ if %errorlevel% neq 0 (
     pause
     exit /b 1
 ) else (
-    echo SFML encontrado.
+    echo SFML encontrado en C:\SFML.
 )
 
 echo.
