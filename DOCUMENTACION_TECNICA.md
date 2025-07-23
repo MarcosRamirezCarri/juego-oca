@@ -20,18 +20,18 @@ El polimorfismo se manifiesta en la capacidad de tratar todas las casillas de ma
 Este enfoque polimórfico elimina la necesidad de usar múltiples declaraciones `if-else` o `switch` para determinar qué hacer según el tipo de casilla. En su lugar, cada subclase implementa su propia lógica, y el sistema de enlace dinámico de C++ se encarga de llamar al método correcto. Esto hace que el código sea más limpio, más fácil de mantener y más extensible.
 
 #### 1.4 Composición
-La composición se utiliza para construir objetos complejos a partir de objetos más simples. La clase `Juego` contiene instancias de `Jugador`, `Dado` y `Tablero`, mientras que `Tablero` contiene un vector de casillas. Esta estructura refleja las relaciones naturales del dominio del problema: un juego tiene jugadores, un dado y un tablero, y un tablero tiene casillas.
+La composición se utiliza para construir objetos complejos a partir de objetos más simples. La clase `Juego` contiene instancias de `Jugador`, `Dado` y un vector de casillas, mientras que `JuegoGUI` contiene una instancia de `Juego` y maneja la interfaz gráfica. Esta estructura refleja las relaciones naturales del dominio del problema: un juego tiene jugadores, un dado y casillas, y una interfaz gráfica tiene un juego.
 
-La composición se implementa usando smart pointers (`std::unique_ptr`) para gestionar automáticamente el ciclo de vida de los objetos compuestos. Esto garantiza que cuando se destruye un objeto `Juego`, todos sus componentes se liberan automáticamente, previniendo memory leaks y simplificando la gestión de memoria.
+La composición se implementa usando smart pointers (`std::unique_ptr`) para gestionar automáticamente el ciclo de vida de los objetos compuestos. Esto garantiza que cuando se destruye un objeto `JuegoGUI`, todos sus componentes se liberan automáticamente, previniendo memory leaks y simplificando la gestión de memoria.
 
 ### 3. Análisis de Clases
 
 #### 3.1 Clase Juego
 La clase `Juego` actúa como el orquestador principal del sistema, coordinando todas las interacciones entre los diferentes componentes. Su responsabilidad principal es controlar el flujo del juego, gestionando los turnos de los jugadores, aplicando las reglas del juego y verificando las condiciones de victoria.
 
-Esta clase mantiene el estado global del juego a través de varios atributos clave. El vector `jugadores` almacena todas las instancias de jugadores participantes, permitiendo un número variable de jugadores (típicamente entre 2 y 4). Los smart pointers `dado` y `tablero` representan los componentes fundamentales del juego, gestionando automáticamente su ciclo de vida. El `jugadorActual` mantiene un seguimiento del turno actual, mientras que `finDelJuego` controla el estado de terminación del juego.
+Esta clase mantiene el estado global del juego a través de varios atributos clave. El vector `jugadores` almacena todas las instancias de jugadores participantes, permitiendo un número variable de jugadores (típicamente entre 2 y 4). El smart pointer `dado` y el vector `casillas` representan los componentes fundamentales del juego, gestionando automáticamente su ciclo de vida. El `jugadorActual` mantiene un seguimiento del turno actual, mientras que `finDelJuego` controla el estado de terminación del juego.
 
-La implementación de esta clase demuestra un buen uso de la composición, ya que `Juego` no hereda de otras clases sino que utiliza instancias de `Jugador`, `Dado` y `Tablero` para construir su funcionalidad. Esto facilita la reutilización de componentes y hace que el código sea más modular y fácil de probar.
+La implementación de esta clase demuestra un buen uso de la composición, ya que `Juego` no hereda de otras clases sino que utiliza instancias de `Jugador`, `Dado` y casillas para construir su funcionalidad. Esto facilita la reutilización de componentes y hace que el código sea más modular y fácil de probar.
 
 #### 3.2 Clase Jugador
 La clase `Jugador` encapsula toda la información y comportamiento relacionado con un participante individual del juego. Su diseño refleja el principio de responsabilidad única, ya que se enfoca exclusivamente en mantener el estado de un jugador y gestionar sus interacciones con el tablero.
@@ -69,12 +69,8 @@ El patrón Strategy se implementa de manera natural a través del sistema de her
 
 Esta implementación del Strategy Pattern es particularmente elegante porque elimina la necesidad de usar declaraciones condicionales complejas. En lugar de tener un método largo con múltiples `if-else` para determinar qué hacer según el tipo de casilla, cada casilla encapsula su propia lógica. Esto hace que el código sea más mantenible y extensible, ya que agregar un nuevo tipo de casilla solo requiere crear una nueva subclase sin modificar el código existente.
 
-#### 4.2 Factory Pattern (implícito)
-Aunque no se implementa explícitamente como una clase Factory separada, el patrón Factory se manifiesta en la clase `Tablero` durante la inicialización de las casillas. El constructor de `Tablero` actúa como una fábrica que crea diferentes tipos de casillas según su número de posición.
 
-Esta implementación implícita del Factory Pattern es apropiada para este contexto porque la lógica de creación es relativamente simple y estática. El tablero conoce las reglas del juego y puede determinar qué tipo de casilla debe crear en cada posición. Si en el futuro se necesitara una lógica de creación más compleja o dinámica, sería fácil refactorizar este código para usar una clase Factory explícita.
-
-#### 4.3 Observer Pattern (simplificado)
+#### 4.2 Observer Pattern (simplificado)
 El Observer Pattern se implementa de manera simplificada en el mecanismo del pozo. Cuando un jugador cae en el pozo, todos los otros jugadores que estaban atrapados son notificados y liberados automáticamente. Aunque no se usa una implementación formal del patrón Observer con interfaces y listas de observadores, la funcionalidad es equivalente.
 
 Esta implementación simplificada es apropiada para este contexto porque la relación de observación es simple y directa: solo hay un tipo de evento (alguien cae en el pozo) y una acción correspondiente (liberar a todos los jugadores atrapados). En un sistema más complejo, se podría implementar un sistema de eventos más sofisticado, pero para este proyecto la implementación actual es suficiente y mantiene el código simple y comprensible.
@@ -83,9 +79,9 @@ Esta implementación simplificada es apropiada para este contexto porque la rela
 
 La gestión de memoria en este proyecto se basa en el principio RAII (Resource Acquisition Is Initialization) y utiliza smart pointers modernos de C++ para garantizar la seguridad y eficiencia. La elección de usar `std::unique_ptr` en lugar de punteros raw refleja un entendimiento profundo de las mejores prácticas de C++ moderno.
 
-Los smart pointers se utilizan en dos contextos principales: para gestionar el dado y el tablero en la clase `Juego`, y para gestionar las casillas individuales en el vector del tablero. Esta implementación garantiza que cuando un objeto `Juego` se destruye, todos sus componentes se liberan automáticamente, previniendo memory leaks que son comunes en proyectos que usan gestión manual de memoria.
+Los smart pointers se utilizan en dos contextos principales: para gestionar el dado en la clase `Juego`, y para gestionar las casillas individuales en el vector de casillas. Esta implementación garantiza que cuando un objeto `Juego` se destruye, todos sus componentes se liberan automáticamente, previniendo memory leaks que son comunes en proyectos que usan gestión manual de memoria.
 
-La ventaja de usar `std::unique_ptr` sobre `std::shared_ptr` en este contexto es que refleja correctamente la semántica de propiedad: el `Juego` es el único dueño del `Dado` y del `Tablero`, y no hay necesidad de compartir estos recursos con otros objetos. Esto hace que el código sea más claro en cuanto a las relaciones de propiedad y más eficiente en términos de rendimiento.
+La ventaja de usar `std::unique_ptr` sobre `std::shared_ptr` en este contexto es que refleja correctamente la semántica de propiedad: el `Juego` es el único dueño del `Dado`, y no hay necesidad de compartir estos recursos con otros objetos. Esto hace que el código sea más claro en cuanto a las relaciones de propiedad y más eficiente en términos de rendimiento.
 
 Además, el uso de smart pointers proporciona exception safety garantizada. Si durante la construcción de un objeto se lanza una excepción, los smart pointers ya creados se liberarán automáticamente, evitando memory leaks que podrían ocurrir con gestión manual de memoria.
 
@@ -109,19 +105,19 @@ Finalmente, el proyecto utiliza `std::string` en lugar de C-style strings, aprov
 
 ### 7. Interfaz de Usuario
 
-#### 7.1 Consola Interactiva
-La interfaz de consola del juego está diseñada para ser intuitiva y fácil de usar, proporcionando una experiencia de usuario clara y consistente. El menú principal presenta las opciones disponibles de manera organizada, permitiendo al usuario navegar fácilmente entre las diferentes funcionalidades del juego.
+#### 7.1 Interfaz Gráfica con SFML
+La interfaz gráfica del juego está implementada usando la biblioteca SFML (Simple and Fast Multimedia Library), proporcionando una experiencia de usuario moderna e intuitiva. La interfaz presenta el tablero de juego de manera visual, con representaciones gráficas de las casillas, jugadores y elementos del juego.
 
-La validación de entrada es una característica importante de la interfaz, asegurando que solo se acepten datos válidos y proporcionando mensajes de error informativos cuando sea necesario. Esto previene que el programa se comporte de manera inesperada debido a entrada incorrecta del usuario.
+La clase `JuegoGUI` actúa como el controlador principal de la interfaz, manejando la renderización, eventos de usuario y la comunicación con la lógica del juego. Esta separación entre la lógica del juego y la interfaz gráfica sigue el patrón Model-View-Controller (MVC), facilitando el mantenimiento y la extensión del código.
 
-La salida del juego está cuidadosamente formateada para ser clara y legible, con separadores visuales y estructura que facilitan el seguimiento del progreso del juego. Los estados del juego se muestran de manera consistente, permitiendo a los jugadores entender fácilmente la situación actual y tomar decisiones informadas.
+La interfaz incluye elementos visuales como tokens de jugadores, representación gráfica del tablero, botones interactivos y un historial de acciones. Los jugadores pueden ver claramente su posición en el tablero, el estado del juego y las acciones disponibles, haciendo que la experiencia sea más inmersiva y fácil de seguir.
 
 #### 7.2 Experiencia de Usuario
-La experiencia de usuario se ha optimizado para ser informativa y agradable. Cada acción del juego va acompañada de mensajes explicativos que ayudan al usuario a entender qué está sucediendo y por qué. Esto es especialmente importante en un juego como el de la Oca, donde las reglas pueden ser complejas y los efectos de las casillas especiales pueden no ser inmediatamente obvios.
+La experiencia de usuario se ha optimizado para ser informativa y agradable. Cada acción del juego va acompañada de feedback visual inmediato, con animaciones y efectos que ayudan al usuario a entender qué está sucediendo y por qué. Esto es especialmente importante en un juego como el de la Oca, donde las reglas pueden ser complejas y los efectos de las casillas especiales pueden no ser inmediatamente obvios.
 
-Los indicadores visuales, como las flechas que marcan el jugador actual, proporcionan información contextual de manera inmediata y clara. La confirmación de acciones importantes, como el lanzamiento del dado o el movimiento a una nueva casilla, ayuda al usuario a mantener el control sobre el juego y entender las consecuencias de sus acciones.
+Los indicadores visuales, como los tokens de colores para cada jugador y las etiquetas de posición, proporcionan información contextual de manera inmediata y clara. La confirmación de acciones importantes, como el lanzamiento del dado o el movimiento a una nueva casilla, se muestra visualmente, ayudando al usuario a mantener el control sobre el juego y entender las consecuencias de sus acciones.
 
-Esta atención al detalle en la interfaz de usuario refleja un entendimiento de que la usabilidad es tan importante como la funcionalidad técnica, especialmente en un proyecto educativo donde la claridad y la accesibilidad son fundamentales.
+Esta atención al detalle en la interfaz gráfica refleja un entendimiento de que la usabilidad es tan importante como la funcionalidad técnica, especialmente en un proyecto educativo donde la claridad y la accesibilidad son fundamentales. La interfaz gráfica hace que el juego sea más accesible para usuarios de diferentes niveles de experiencia.
 
 ### 8. Extensibilidad
 
@@ -136,9 +132,9 @@ La clase `Juego` está diseñada para ser extensible, permitiendo la implementac
 La clase `Jugador` también está preparada para extensiones, con métodos que pueden ser fácilmente modificados o extendidos para soportar nuevos estados o comportamientos. Por ejemplo, se podría agregar un sistema de puntos, efectos temporales, o capacidades especiales sin necesidad de reescribir la lógica fundamental del juego.
 
 #### 8.3 Interfaz Gráfica
-La separación entre la lógica del juego y la interfaz de usuario es una característica importante del diseño. Las clases del modelo (Juego, Jugador, Casilla, etc.) son completamente independientes de la interfaz, lo que permite crear diferentes tipos de interfaces sin modificar la lógica del juego.
+La separación entre la lógica del juego y la interfaz de usuario es una característica importante del diseño. Las clases del modelo (Juego, Jugador, Casilla, etc.) son completamente independientes de la interfaz gráfica, lo que permite modificar o extender la interfaz sin afectar la lógica del juego.
 
-Esta separación se demuestra en la implementación de la versión gráfica del juego, que utiliza las mismas clases del modelo que la versión de consola. La migración a GUI fue posible sin cambios significativos en la lógica del juego, demostrando la robustez del diseño arquitectónico.
+Esta separación se demuestra en la implementación de la interfaz gráfica con SFML, que utiliza las mismas clases del modelo. La clase `JuegoGUI` actúa como una capa de presentación que se comunica con la lógica del juego a través de una interfaz bien definida, demostrando la robustez del diseño arquitectónico y la aplicabilidad del patrón MVC.
 
 ### 9. Testing y Debugging
 
@@ -187,13 +183,14 @@ for (const auto& nombre : nombresJugadores) {
 #### Justificación de `std::unique_ptr`
 ```cpp
 std::unique_ptr<Dado> dado;
-std::unique_ptr<Tablero> tablero;
+std::vector<std::unique_ptr<Casilla>> casillas;
 ```
 **Ventajas:**
 - **RAII**: Gestión automática de recursos (Resource Acquisition Is Initialization)
 - **Prevención de memory leaks**: Liberación automática de memoria
 - **Semántica de propiedad**: Indica claramente quién es dueño del recurso
 - **Exception safety**: Garantiza liberación de recursos incluso con excepciones
+- **Polimorfismo seguro**: Manejo correcto de la herencia en casillas especiales
 
 #### Justificación de Structured Bindings
 ```cpp
@@ -233,22 +230,46 @@ bool Juego::hayJugadoresEnPozo() const {
 - **Seguridad**: Menos propenso a errores de índices
 - **Rendimiento**: Potencialmente más eficiente (optimizaciones del compilador)
 
+#### Ejemplo: Gestión de casillas especiales
+
+**Código moderno (C++17):**
+```cpp
+std::vector<std::unique_ptr<Casilla>> casillas;
+casillas[6] = std::make_unique<CasillaPuente>();
+```
+
+**Código rudimentario:**
+```cpp
+Casilla* casillas[64];
+casillas[6] = new CasillaPuente();
+// Necesita gestión manual de memoria
+```
+
+**Diferencias clave:**
+- **Seguridad**: Sin riesgo de memory leaks
+- **Simplicidad**: No requiere destructores manuales
+- **Polimorfismo**: Manejo correcto de herencia
+- **Exception safety**: Liberación automática en caso de errores
+
 ### 11.3 Impacto en los Principios POO
 
 #### Encapsulación
 - `std::unique_ptr` encapsula la gestión de memoria
 - Los smart pointers implementan RAII correctamente
 - Las clases no necesitan manejar manualmente la liberación de recursos
+- La interfaz gráfica encapsula la presentación del juego
 
 #### Polimorfismo
-- Los smart pointers manejan correctamente la herencia
+- Los smart pointers manejan correctamente la herencia en casillas
 - Evitan problemas de slicing y memory leaks
 - Facilitan el uso seguro de polimorfismo
+- La interfaz gráfica utiliza polimorfismo para diferentes tipos de casillas
 
 #### Reutilización
 - Las características modernas hacen el código más modular
 - Facilitan la extensión y modificación del proyecto
 - Mejoran la interfaz entre clases
+- La separación MVC permite reutilizar la lógica del juego en diferentes interfaces
 
 
 ### 11.4 Conclusión del Resumen
@@ -260,5 +281,6 @@ La utilización de características de C++17 en este proyecto no es solo una dem
 3. **Mantenibilidad**: Facilita futuras modificaciones y extensiones
 4. **Eficiencia**: Aprovecha optimizaciones del compilador moderno
 5. **Profesionalismo**: Demuestra conocimiento de mejores prácticas actuales
+6. **Interfaz moderna**: Utilización de SFML para una experiencia de usuario atractiva
 
-Estas características complementan perfectamente los principios de POO, creando un proyecto que no solo cumple con los requisitos académicos, sino que también establece una base sólida para el desarrollo de software profesional. 
+Estas características complementan perfectamente los principios de POO, creando un proyecto que no solo cumple con los requisitos académicos, sino que también establece una base sólida para el desarrollo de software profesional. La combinación de C++17 moderno con una interfaz gráfica bien diseñada demuestra la capacidad de crear aplicaciones completas y funcionales. 

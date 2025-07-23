@@ -7,7 +7,7 @@
 #include "Casilla.h"
 #include "Dado.h"
 
-// Estructura simple para reemplazar std::pair
+
 struct ResultadoTurno {
     int resultadoDado;
     string descripcion;
