@@ -31,26 +31,30 @@ JuegoGUI::JuegoGUI()
     tituloJuego.setFillColor(sf::Color::White);
     tituloJuego.setPosition(ANCHO_VENTANA / 2 - tituloJuego.getGlobalBounds().width / 2, 10);
     
+    // Texto del jugador actual
     textoJugadorActual.setFont(font);
     textoJugadorActual.setCharacterSize(28);
     textoJugadorActual.setFillColor(sf::Color::White);
-    textoJugadorActual.setPosition(ANCHO_VENTANA - 1150, 100);
+    textoJugadorActual.setPosition(ANCHO_VENTANA - 1350, 160);
     
+    // Texto del dado
     textoDado.setFont(font);
     textoDado.setCharacterSize(24);
     textoDado.setFillColor(sf::Color::White);
-    textoDado.setPosition(ANCHO_VENTANA - 500, 100);
+    textoDado.setPosition(ANCHO_VENTANA - 900, 110);
     
+    // Texto ultima accion
     textoMensaje.setFont(font);
-    textoMensaje.setCharacterSize(16);
+    textoMensaje.setCharacterSize(18);
     textoMensaje.setFillColor(sf::Color::Yellow);
     textoMensaje.setPosition(ANCHO_VENTANA - 500, 150);
     
     // Botón del dado
-    botonDado.setSize(sf::Vector2f(120, 50));
+    botonDado.setSize(sf::Vector2f(140, 60));
     botonDado.setFillColor(sf::Color(70, 130, 180));
-    botonDado.setPosition(ANCHO_VENTANA - 900, 100);
+    botonDado.setPosition(ANCHO_VENTANA - 900, 160);
     
+    // Texto del boton del dado
     textoBotonDado.setFont(font);
     textoBotonDado.setString("LANZAR DADO");
     textoBotonDado.setCharacterSize(16);
@@ -72,11 +76,11 @@ JuegoGUI::JuegoGUI()
         
         numerosCasillas[i].setFont(font);
         numerosCasillas[i].setString(to_string(i));
-        numerosCasillas[i].setCharacterSize(10);
+        numerosCasillas[i].setCharacterSize(12);
         numerosCasillas[i].setFillColor(COLOR_TEXTO);
         
         nombresCasillas[i].setFont(font);
-        nombresCasillas[i].setCharacterSize(8);
+        nombresCasillas[i].setCharacterSize(10);
         nombresCasillas[i].setFillColor(COLOR_TEXTO);
         
         // Posicionar casillas en patrón serpenteante
@@ -86,32 +90,44 @@ JuegoGUI::JuegoGUI()
         nombresCasillas[i].setPosition(pos.x + 2, pos.y + TAMANO_CASILLA - 12);
         
         // Colorear casillas especiales
-        if (i == 9 || i == 18 || i == 27 || i == 36 || i == 45 || i == 54) {
-            casillas[i].setFillColor(COLOR_CASILLA_OCA);
-            nombresCasillas[i].setString("OCA");
-        } else if (i == 6) {
-            casillas[i].setFillColor(COLOR_CASILLA_ESPECIAL);
-            nombresCasillas[i].setString("PUENTE");
-        } else if (i == 19) {
-            casillas[i].setFillColor(COLOR_CASILLA_ESPECIAL);
-            nombresCasillas[i].setString("POSADA");
-        } else if (i == 31) {
-            casillas[i].setFillColor(COLOR_CASILLA_ESPECIAL);
-            nombresCasillas[i].setString("POZO");
-        } else if (i == 42) {
-            casillas[i].setFillColor(COLOR_CASILLA_ESPECIAL);
-            nombresCasillas[i].setString("LABERINTO");
-        } else if (i == 56) {
-            casillas[i].setFillColor(COLOR_CASILLA_ESPECIAL);
-            nombresCasillas[i].setString("CARCEL");
-        } else if (i == 58) {
-            casillas[i].setFillColor(COLOR_CASILLA_ESPECIAL);
-            nombresCasillas[i].setString("CALAVERA");
-        } else if (i == 63) {
-            casillas[i].setFillColor(sf::Color(0, 255, 0)); // Verde para meta
-            nombresCasillas[i].setString("META");
-        } else {
-            casillas[i].setFillColor(COLOR_CASILLA_NORMAL);
+        switch (i) {
+            case 6:
+                casillas[i].setFillColor(COLOR_CASILLA_ESPECIAL);
+                nombresCasillas[i].setString("PUENTE");
+                break;
+            case 19:
+                casillas[i].setFillColor(COLOR_CASILLA_ESPECIAL);
+                nombresCasillas[i].setString("POSADA");
+                break;
+            case 31:
+                casillas[i].setFillColor(COLOR_CASILLA_POZO);
+                nombresCasillas[i].setString("POZO");
+                break;
+            case 42:
+                casillas[i].setFillColor(COLOR_CASILLA_LABERINTO);
+                nombresCasillas[i].setString("LABERINTO");
+                break;
+            case 56:
+                casillas[i].setFillColor(COLOR_CASILLA_CARCEL);
+                nombresCasillas[i].setString("CARCEL");
+                break;
+            case 58:
+                casillas[i].setFillColor(COLOR_CASILLA_CALAVERA);
+                nombresCasillas[i].setString("CALAVERA");
+                break;
+            case 63:
+                casillas[i].setFillColor(COLOR_CASILLA_META);
+                nombresCasillas[i].setString("META");
+                break;
+            default:
+                // Casillas de OCA (múltiplos de 9 hasta 54)
+                if (i % 9 == 0 && i <= 54 && i > 0) {
+                    casillas[i].setFillColor(COLOR_CASILLA_OCA);
+                    nombresCasillas[i].setString("OCA");
+                } else {
+                    casillas[i].setFillColor(COLOR_CASILLA_NORMAL);
+                }
+                break;
         }
     }
     // Inicializar el texto del turno
@@ -150,9 +166,9 @@ void JuegoGUI::inicializarJuego(const vector<string>& nombres) {
     
     for (size_t i = 0; i < nombres.size(); i++) {
         // Ficha del jugador
-        sf::CircleShape ficha(15);
+        sf::CircleShape ficha(18);
         ficha.setFillColor(coloresFichas[i % coloresFichas.size()]);
-        ficha.setOutlineThickness(2);
+        ficha.setOutlineThickness(1);
         
         ficha.setOutlineColor(sf::Color::Black);
         fichasJugadores.push_back(ficha);
@@ -161,7 +177,7 @@ void JuegoGUI::inicializarJuego(const vector<string>& nombres) {
         sf::Text inicial;
         inicial.setFont(font);
         inicial.setString(string(1, nombres[i][0])); // Primera letra del nombre
-        inicial.setCharacterSize(12);
+        inicial.setCharacterSize(16);
         inicial.setFillColor(sf::Color::Black);
         inicial.setStyle(sf::Text::Bold);
         // La posición se ajustará en dibujarJugadores()
@@ -259,7 +275,7 @@ void JuegoGUI::dibujarUI() {
     float yHist = 400;
     sf::Text tHist;
     tHist.setFont(font);
-    tHist.setCharacterSize(14);
+    tHist.setCharacterSize(16);
     tHist.setFillColor(sf::Color::White);
     tHist.setStyle(sf::Text::Regular);
     tHist.setPosition(ANCHO_VENTANA - 500, yHist);
@@ -270,7 +286,7 @@ void JuegoGUI::dibujarUI() {
         tHist.setString(linea);
         tHist.setPosition(ANCHO_VENTANA - 500, yHist);
         window.draw(tHist);
-        yHist += 34;
+        yHist += 38;
     }
 }
 
@@ -328,8 +344,9 @@ sf::Vector2f JuegoGUI::obtenerPosicionCasilla(int numeroCasilla) {
         columna = COLUMNAS_TABLERO - 1 - columna;
     }
 
-    float x = MARGEN + columna * TAMANO_CASILLA;
-    float y = ALTO_VENTANA - MARGEN - (fila + 1) * TAMANO_CASILLA;
+    // Agregar espaciado entre casillas
+    float x = MARGEN + columna * (TAMANO_CASILLA + ESPACIADO_CASILLAS);
+    float y = ALTO_VENTANA - MARGEN - (fila + 1) * (TAMANO_CASILLA + ESPACIADO_CASILLAS);
     
     return sf::Vector2f(x, y);
 }
@@ -342,7 +359,7 @@ void JuegoGUI::agregarAlHistorial(const string& accion) {
     }
 }
 
-// Métodos para ser llamado desde Juego (patrón Observer)
+// Métodos para ser llamado desde Juego
 void JuegoGUI::actualizarTurno() {
     if (juegoIniciado && juego) {
         int actual = juego->obtenerJugadorActual();

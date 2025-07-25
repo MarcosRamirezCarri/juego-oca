@@ -2,15 +2,6 @@
 echo "=== JUEGO DE LA OCA - VERSION GRAFICA (LINUX) ==="
 echo
 
-echo "Verificando si SFML esta instalado..."
-if ! command -v sfml-config &> /dev/null
-then
-    echo "SFML no esta instalado."
-    echo "Por favor instala SFML con tu gestor de paquetes o desde https://www.sfml-dev.org/download.php"
-    exit 1
-else
-    echo "SFML encontrado."
-fi
 
 echo
 echo "Compilando el juego..."

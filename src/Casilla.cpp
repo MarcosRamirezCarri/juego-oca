@@ -39,13 +39,11 @@ void CasillaOca::accionJugador(Jugador& jugador) {
     int siguienteOca;
     
     // Determinar la siguiente casilla de oca
-    if (posicionActual == 9) siguienteOca = 18;
-    else if (posicionActual == 18) siguienteOca = 27;
-    else if (posicionActual == 27) siguienteOca = 36;
-    else if (posicionActual == 36) siguienteOca = 45;
-    else if (posicionActual == 45) siguienteOca = 54;
-    else if (posicionActual == 54) siguienteOca = 63; // Jardín de la Oca
-    else siguienteOca = 63; // Por si acaso
+    if (posicionActual == 54) {
+        siguienteOca = 63; // Jardín de la Oca (caso especial)
+    } else {
+        siguienteOca = posicionActual + 9; // Sumar 9 para ir a la siguiente oca
+    }
     
     jugador.moverJugador(siguienteOca);
     cout << "¡De oca a oca y tiro porque me toca! Avanzas a la casilla " << siguienteOca << endl;

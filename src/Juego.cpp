@@ -197,10 +197,10 @@ ResultadoTurno Juego::lanzarDadoYJugarTurno() {
     
     procesarMovimiento(jugadorActual, nuevaPos);
     
-    // Verificar si es casilla de oca para turno extra (usando la casilla original)
+    // Verificar si es casilla de oca para turno extra 
     if (casilla && casilla->getNombre() == "Oca") {
         turnoExtra = true;
-        movimiento += "\n¡Turno extra por caer en oca!";
+        // No agregar el mensaje del turno extra al movimiento para el historial
     } else {
         turnoExtra = false;
         pasarTurno();

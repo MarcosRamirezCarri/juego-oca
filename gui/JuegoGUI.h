@@ -44,18 +44,24 @@ private:
     void agregarAlHistorial(const string& accion);
     
     // Constantes
-    static const int ANCHO_VENTANA = 1200;
-    static const int ALTO_VENTANA = 800;
-    static const int TAMANO_CASILLA = 64;
+    static const int ANCHO_VENTANA = 1400;
+    static const int ALTO_VENTANA = 900;
+    static const int TAMANO_CASILLA = 78;
     static const int MARGEN = 50;
-    static const int FILAS_TABLERO = 9;
-    static const int COLUMNAS_TABLERO = 7;
+    static const int ESPACIADO_CASILLAS = 6; 
+    static const int FILAS_TABLERO = 10;
+    static const int COLUMNAS_TABLERO = 9;
     
     // Colores
     sf::Color COLOR_FONDO = sf::Color(34, 139, 34); // Verde bosque
     sf::Color COLOR_CASILLA_NORMAL = sf::Color(255, 255, 255); // Blanco
     sf::Color COLOR_CASILLA_OCA = sf::Color(255, 215, 0); // Dorado
-    sf::Color COLOR_CASILLA_ESPECIAL = sf::Color(255, 165, 0); // Naranja
+    sf::Color COLOR_CASILLA_ESPECIAL = sf::Color(255, 120, 0); // Naranja
+    sf::Color COLOR_CASILLA_CALAVERA = sf::Color(153, 122, 111); // Gris
+    sf::Color COLOR_CASILLA_LABERINTO = sf::Color(69, 128, 252); // Azul
+    sf::Color COLOR_CASILLA_POZO = sf::Color(255, 38, 38); // Rojo
+    sf::Color COLOR_CASILLA_CARCEL = sf::Color(69, 69, 69); // Gris oscuro
+    sf::Color COLOR_CASILLA_META = sf::Color(49, 255, 0); // Verde
     sf::Color COLOR_FICHA = sf::Color(255, 0, 0); // Rojo
     sf::Color COLOR_TEXTO = sf::Color(0, 0, 0); // Negro
 
