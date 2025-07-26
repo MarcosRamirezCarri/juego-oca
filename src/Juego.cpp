@@ -32,7 +32,7 @@ void Juego::iniciarJuego() {
     
     while (!finDelJuego) {
        
-        
+        // Verificar si el jugador puede jugar
         if (jugadores[jugadorActual].puedeJugar()) {
             jugarTurno();
         } else {
@@ -46,6 +46,7 @@ void Juego::iniciarJuego() {
             pasarTurno();
         }
         
+        // Verificar si el jugador ha ganado
         if (verificarGanador()) {
             finDelJuego = true;
             cout << "\n🎉 ¡" << jugadores[jugadorActual].conseguirNombre() << " HA GANADO! 🎉" << endl;
@@ -215,30 +216,9 @@ ResultadoTurno Juego::lanzarDadoYJugarTurno() {
     return ResultadoTurno(resultado, movimiento);
 }
 
-// Métodos para conectar con la interfaz gráfica
+// Método para conectar con la interfaz gráfica
 void Juego::setGUI(JuegoGUI* interfaz) {
     gui = interfaz;
-}
-
-void Juego::notificarCambioTurno() {
-    if (gui) {
-        // La GUI se actualizará automáticamente
-        // Este método permite notificaciones específicas si es necesario
-    }
-}
-
-void Juego::notificarMovimiento(int jugadorIndex, int posicionAnterior, int nuevaPosicion) {
-    if (gui) {
-        // Notificar a la GUI sobre el movimiento
-        // Esto permite animaciones o actualizaciones específicas
-    }
-}
-
-void Juego::notificarGanador(const string& nombreGanador) {
-    if (gui) {
-        // Notificar a la GUI sobre el ganador
-        // Esto permite mostrar una pantalla de victoria especial
-    }
 }
 
 // Métodos privados para manejar las casillas

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef DADO_H
+#define DADO_H
 
 class Dado {
 private:
@@ -8,5 +9,7 @@ public:
     Dado(int caras = 6);
     int lanzar();
 };
+
+#endif // DADO_H
 
  

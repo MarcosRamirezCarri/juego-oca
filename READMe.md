@@ -1,6 +1,12 @@
-# 🎮 Juego de la Oca - Guía Completa para Windows
+# Trabajo Practico Anual "El juego de la OCA"
 
-## 📋 Índice
+# Entrega N° 2: INTERFAZ JUGABLE
+
+## Alumnos: Valentino Pocai y Marcos Ramirez
+
+## Juego de la Oca - Guía Completa para Windows
+
+## Índice
 1. [Requisitos del Sistema](#requisitos-del-sistema)
 2. [Instalación Paso a Paso](#instalación-paso-a-paso)
 3. [Compilación y Ejecución](#compilación-y-ejecución)
@@ -10,7 +16,7 @@
 
 ---
 
-## 🖥️ Requisitos del Sistema
+## Requisitos del Sistema
 
 ### **Versión Gráfica**
 - **Windows 7 o superior**
@@ -20,7 +26,7 @@
 
 ---
 
-## 🔧 Instalación Paso a Paso
+## Instalación Paso a Paso
 
 ### **Paso 1: Instalar MinGW-w64**
 
@@ -84,9 +90,9 @@ pacman -S mingw-w64-x86_64-make
 
 ---
 
-## 🚀 Compilación y Ejecución
+## Compilación y Ejecución
 
-### **🎨 Versión Gráfica**
+### **Versión Gráfica**
 
 #### **Opción 1: Script Automático (Más Fácil)**
 ```cmd
@@ -126,9 +132,9 @@ make -f Makefile.windows run
 
 ---
 
-## 🔍 Solución de Problemas
+## Solución de Problemas
 
-### **❌ Error: "g++ no se reconoce como comando"**
+### **Error: "g++ no se reconoce como comando"**
 
 **Causa**: MinGW-w64 no está en el PATH del sistema
 
@@ -140,7 +146,7 @@ make -f Makefile.windows run
 3. Reinicia el Command Prompt
 4. Verifica con: `g++ --version`
 
-### **❌ Error: "SFML no encontrado"**
+### **Error: "SFML no encontrado"**
 
 **Causa**: SFML no está instalado o no está en el PATH
 
@@ -152,7 +158,7 @@ make -f Makefile.windows run
    - `sfml-window-2.dll`
    - `sfml-system-2.dll`
 
-### **❌ Error: "No se pudo cargar la fuente"**
+### **Error: "No se pudo cargar la fuente"**
 
 **Causa**: No se encuentra la fuente del sistema
 
@@ -161,7 +167,7 @@ make -f Makefile.windows run
 - No afecta la funcionalidad del juego
 - Puedes ignorar este mensaje
 
-### **❌ Error: "make no se reconoce"**
+### **Error: "make no se reconoce"**
 
 **Causa**: Make no está instalado
 
@@ -170,7 +176,7 @@ make -f Makefile.windows run
 2. O compila manualmente con g++
 3. O usa los scripts `.bat` automáticos
 
-### **❌ Error: "LNK1104: no se puede abrir el archivo"**
+### **Error: "LNK1104: no se puede abrir el archivo"**
 
 **Causa**: Rutas incorrectas de SFML
 
@@ -181,7 +187,7 @@ make -f Makefile.windows run
    -I"C:/SFML/include" -L"C:/SFML/lib"
    ```
 
-### **❌ Error: "The application was unable to start correctly"**
+### **Error: "The application was unable to start correctly"**
 
 **Causa**: DLLs de SFML faltantes
 
@@ -191,38 +197,36 @@ make -f Makefile.windows run
 
 ---
 
-## 📁 Estructura del Proyecto
+## Estructura del Proyecto
 
 ```
 juego-oca/
-├── 📂 src/                    # Código fuente del juego         
+├── src/                    # Código fuente del juego         
 │   ├── Juego.cpp             # Lógica principal del juego
 │   ├── Jugador.cpp           # Gestión de jugadores
 │   ├── Casilla.cpp           # Casillas especiales
 │   └── Dado.cpp              # Lógica del dado
-├── 📂 assets/                 # Archivos de cabecera (.h)
+├── assets/                 # Archivos de cabecera (.h)
 │   ├── Juego.h
 │   ├── Jugador.h
 │   ├── Casilla.h
 │   └── Dado.h
-├── 📂 gui/                    # Versión gráfica
+├── gui/                    # Versión gráfica
 │   ├── main_gui.cpp          # Punto de entrada (GUI)
 │   ├── JuegoGUI.cpp          # Interfaz gráfica
 │   ├── JuegoGUI.h
 │   ├── Makefile              # Makefile para Linux/macOS
-│   ├── Makefile.windows      # Makefile para Windows
 │   ├── ejecutar_gui.sh       # Script para Linux/macOS
 │   └── ejecutar_gui.bat      # Script para Windows
-├── 📄 Makefile               # Makefile principal (Linux/macOS)
-├── 📄 Makefile.windows       # Makefile principal (Windows)
-
-├── 📄 README.md              # Documentación principal
-└── 📄 README_WINDOWS.md      # Esta guía
+├── Makefile               # Makefile principal (Linux/macOS)
+├── DOCUMENTACION_ARCHIVOS_SRC.md   # Detalle de cada archivo en ./src
+├── DOCUMENTACION_TECNICA.md      # Documentacion total del proyecto
+└── README.md      # Esta guía
 ```
 
 ---
 
-## ❓ Preguntas Frecuentes
+## Preguntas Frecuentes
 
 ### **Q: ¿Cuál versión debo usar?**
 **A**: 
@@ -259,7 +263,7 @@ juego-oca/
 
 ---
 
-## 🎯 Consejos de Uso
+## Consejos de Uso
 
 ### **Para Desarrolladores**
 - Usa **Visual Studio Code** con extensiones de C++
@@ -278,12 +282,8 @@ juego-oca/
 
 ---
 
-## 📞 Soporte
+## Soporte
 
-Si tienes problemas:
-1. Revisa esta guía completa
-2. Verifica que todos los requisitos estén instalados
-3. Asegúrate de que SFML esté correctamente configurado
-4. Consulta la documentación técnica del proyecto
+Si tienes problemas: Contacte con los alumnos responsables de la entrega
 
-¡Disfruta jugando al Juego de la Oca! 🎲 
+Trabajo Practico Anual: Valentino Pocai, Marcos Ramirez

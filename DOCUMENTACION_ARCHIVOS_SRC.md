@@ -127,7 +127,7 @@ public:
 // Implementaciones específicas para cada tipo de casilla
 ```
 
-## 🎮 `Juego.cpp` - Lógica Principal del Juego
+## `Juego.cpp` - Lógica Principal del Juego
 
 ### **Propósito**
 Clase central que coordina toda la lógica del juego, manejando turnos, movimientos, reglas y la interacción entre todos los componentes.

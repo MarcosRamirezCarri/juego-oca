@@ -1,4 +1,5 @@
-#pragma once
+#ifndef JUEGO_H
+#define JUEGO_H
 
 #include <vector>
 #include <string>
@@ -54,9 +55,8 @@ public:
     // Metodo para lanzar el dado, jugar el turno y devolver el resultado
     ResultadoTurno lanzarDadoYJugarTurno();
     
-    // Métodos para conectar con la interfaz gráfica
+    // Método para conectar con la interfaz gráfica
     void setGUI(JuegoGUI* interfaz);
-    void notificarCambioTurno();
-    void notificarMovimiento(int jugadorIndex, int posicionAnterior, int nuevaPosicion);
-    void notificarGanador(const string& nombreGanador);
-}; 
+};
+
+#endif // JUEGO_H 
