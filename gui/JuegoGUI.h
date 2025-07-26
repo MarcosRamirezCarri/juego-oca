@@ -1,4 +1,5 @@
-#pragma once
+#ifndef JUEGO_GUI_H
+#define JUEGO_GUI_H
 
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
@@ -43,6 +44,9 @@ private:
     vector<string> historial;
     void agregarAlHistorial(const string& accion);
     
+    // Función auxiliar para configurar elementos de texto
+    void configurarTexto(sf::Text& texto, const string& contenido, int tamano, const sf::Color& color, float x, float y);
+    
     // Constantes
     static const int ANCHO_VENTANA = 1400;
     static const int ALTO_VENTANA = 900;
@@ -84,8 +88,7 @@ public:
     void mostrarMensaje(const string& mensaje);
     sf::Vector2f obtenerPosicionCasilla(int numeroCasilla);
     
-    // Métodos para ser llamado desde Juego (patrón Observer)
-    void actualizarTurno();
-    void actualizarMovimiento(int jugadorIndex, int posicionAnterior, int nuevaPosicion);
-    void mostrarGanador(const string& nombreGanador);
-}; 
+
+};
+
+#endif // JUEGO_GUI_H 

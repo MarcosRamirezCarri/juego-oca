@@ -24,30 +24,15 @@ JuegoGUI::JuegoGUI()
         }
     }
     
-    // Inicializar elementos de UI
-    tituloJuego.setFont(font);
-    tituloJuego.setString("JUEGO DE LA OCA");
-    tituloJuego.setCharacterSize(32);
-    tituloJuego.setFillColor(sf::Color::White);
-    tituloJuego.setPosition(ANCHO_VENTANA / 2 - tituloJuego.getGlobalBounds().width / 2, 10);
+    // Inicializar elementos de UI usando función auxiliar
+    configurarTexto(tituloJuego, "JUEGO DE LA OCA", 32, sf::Color::White, 
+                   ANCHO_VENTANA / 2 - tituloJuego.getGlobalBounds().width / 2, 10);
     
-    // Texto del jugador actual
-    textoJugadorActual.setFont(font);
-    textoJugadorActual.setCharacterSize(28);
-    textoJugadorActual.setFillColor(sf::Color::White);
-    textoJugadorActual.setPosition(ANCHO_VENTANA - 1350, 160);
+    configurarTexto(textoJugadorActual, "", 28, sf::Color::White, ANCHO_VENTANA - 1350, 160);
     
-    // Texto del dado
-    textoDado.setFont(font);
-    textoDado.setCharacterSize(24);
-    textoDado.setFillColor(sf::Color::White);
-    textoDado.setPosition(ANCHO_VENTANA - 900, 110);
+    configurarTexto(textoDado, "", 24, sf::Color::White, ANCHO_VENTANA - 900, 110);
     
-    // Texto ultima accion
-    textoMensaje.setFont(font);
-    textoMensaje.setCharacterSize(18);
-    textoMensaje.setFillColor(sf::Color::Yellow);
-    textoMensaje.setPosition(ANCHO_VENTANA - 500, 150);
+    configurarTexto(textoMensaje, "", 18, sf::Color::Yellow, ANCHO_VENTANA - 500, 150);
     
     // Botón del dado
     botonDado.setSize(sf::Vector2f(140, 60));
@@ -55,10 +40,8 @@ JuegoGUI::JuegoGUI()
     botonDado.setPosition(ANCHO_VENTANA - 900, 160);
     
     // Texto del boton del dado
-    textoBotonDado.setFont(font);
-    textoBotonDado.setString("LANZAR DADO");
-    textoBotonDado.setCharacterSize(16);
-    textoBotonDado.setFillColor(sf::Color::White);
+    configurarTexto(textoBotonDado, "LANZAR DADO", 16, sf::Color::White, 0, 0);
+    // Centrar el texto en el botón
     textoBotonDado.setPosition(
         botonDado.getPosition().x + botonDado.getSize().x / 2 - textoBotonDado.getGlobalBounds().width / 2,
         botonDado.getPosition().y + botonDado.getSize().y / 2 - textoBotonDado.getGlobalBounds().height / 2
@@ -74,14 +57,8 @@ JuegoGUI::JuegoGUI()
         casillas[i].setOutlineThickness(2);
         casillas[i].setOutlineColor(sf::Color::Black);
         
-        numerosCasillas[i].setFont(font);
-        numerosCasillas[i].setString(to_string(i));
-        numerosCasillas[i].setCharacterSize(12);
-        numerosCasillas[i].setFillColor(COLOR_TEXTO);
-        
-        nombresCasillas[i].setFont(font);
-        nombresCasillas[i].setCharacterSize(10);
-        nombresCasillas[i].setFillColor(COLOR_TEXTO);
+        configurarTexto(numerosCasillas[i], to_string(i), 12, COLOR_TEXTO, 0, 0);
+        configurarTexto(nombresCasillas[i], "", 10, COLOR_TEXTO, 0, 0);
         
         // Posicionar casillas en patrón serpenteante
         sf::Vector2f pos = obtenerPosicionCasilla(i);
@@ -175,21 +152,15 @@ void JuegoGUI::inicializarJuego(const vector<string>& nombres) {
         
         // Inicial del jugador en la ficha
         sf::Text inicial;
-        inicial.setFont(font);
-        inicial.setString(string(1, nombres[i][0])); // Primera letra del nombre
-        inicial.setCharacterSize(16);
-        inicial.setFillColor(sf::Color::Black);
+        configurarTexto(inicial, string(1, nombres[i][0]), 16, sf::Color::Black, 0, 0);
         inicial.setStyle(sf::Text::Bold);
         // La posición se ajustará en dibujarJugadores()
         inicialesJugadores.push_back(inicial);
         
         // Nombre del jugador
-        sf::Text nombre ;
-        nombre.setFont(font);
-        nombre.setString(nombres[i]);
-        nombre.setCharacterSize(20);
-        nombre.setFillColor(coloresFichas[i % coloresFichas.size()]);
-        nombre.setPosition(ANCHO_VENTANA - 500, 250 + i * 30);
+        sf::Text nombre;
+        configurarTexto(nombre, nombres[i], 20, coloresFichas[i % coloresFichas.size()], 
+                       ANCHO_VENTANA - 500, 250 + i * 30);
         nombresJugadores.push_back(nombre);
     }
     
@@ -359,27 +330,12 @@ void JuegoGUI::agregarAlHistorial(const string& accion) {
     }
 }
 
-// Métodos para ser llamado desde Juego
-void JuegoGUI::actualizarTurno() {
-    if (juegoIniciado && juego) {
-        int actual = juego->obtenerJugadorActual();
-        textoJugadorActual.setString("Turno: Jugador " + to_string(actual + 1));
-    }
+void JuegoGUI::configurarTexto(sf::Text& texto, const string& contenido, int tamano, const sf::Color& color, float x, float y) {
+    texto.setFont(font);
+    texto.setString(contenido);
+    texto.setCharacterSize(tamano);
+    texto.setFillColor(color);
+    texto.setPosition(x, y);
 }
 
-void JuegoGUI::actualizarMovimiento(int jugadorIndex, int posicionAnterior, int nuevaPosicion) {
-    if (juegoIniciado && juego) {
-        string movimiento = u8"Jugador " + to_string(jugadorIndex + 1) + 
-                           u8" se mueve de " + to_string(posicionAnterior) + 
-                           u8" a " + to_string(nuevaPosicion);
-        agregarAlHistorial(movimiento);
-    }
-}
-
-void JuegoGUI::mostrarGanador(const string& nombreGanador) {
-    if (juegoIniciado) {
-        string mensajeGanador = u8"🎉 ¡" + nombreGanador + " HA GANADO! 🎉";
-        mostrarMensaje(mensajeGanador);
-        agregarAlHistorial(mensajeGanador);
-    }
-} 
+ 
