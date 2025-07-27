@@ -25,7 +25,6 @@ private:
     // Jugadores
     vector<sf::CircleShape> fichasJugadores;
     vector<sf::Text> nombresJugadores;
-    vector<sf::Text> inicialesJugadores;  // Iniciales en las fichas
     
     // Elementos de UI
     sf::Text tituloJuego;
@@ -34,6 +33,23 @@ private:
     sf::Text textoMensaje;
     sf::RectangleShape botonDado;
     sf::Text textoBotonDado;
+    sf::RectangleShape botonReiniciarJuego;
+    sf::Text textoBotonReiniciar;
+    sf::Text textoAutores;
+    
+    // Elementos de configuración inicial
+    sf::Text textoConfiguracion;
+    sf::Text textoCantidadJugadores;
+    sf::RectangleShape botonMenosJugadores;
+    sf::RectangleShape botonMasJugadores;
+    sf::Text textoMenosJugadores;
+    sf::Text textoMasJugadores;
+    sf::RectangleShape botonIniciarJuego;
+    sf::Text textoIniciarJuego;
+    vector<sf::Text> camposNombres;
+    vector<sf::RectangleShape> rectangulosNombres;
+    int cantidadJugadoresSeleccionada;
+    bool enConfiguracion;
     
     // Lógica del juego - ahora es una composición, no herencia
     unique_ptr<Juego> juego;
@@ -48,7 +64,7 @@ private:
     void configurarTexto(sf::Text& texto, const string& contenido, int tamano, const sf::Color& color, float x, float y);
     
     // Constantes
-    static const int ANCHO_VENTANA = 1400;
+    static const int ANCHO_VENTANA = 1500;
     static const int ALTO_VENTANA = 900;
     static const int TAMANO_CASILLA = 78;
     static const int MARGEN = 50;
@@ -66,19 +82,28 @@ private:
     sf::Color COLOR_CASILLA_POZO = sf::Color(255, 38, 38); // Rojo
     sf::Color COLOR_CASILLA_CARCEL = sf::Color(69, 69, 69); // Gris oscuro
     sf::Color COLOR_CASILLA_META = sf::Color(49, 255, 0); // Verde
-    sf::Color COLOR_FICHA = sf::Color(255, 0, 0); // Rojo
     sf::Color COLOR_TEXTO = sf::Color(0, 0, 0); // Negro
+    sf::Color COLOR_BOTON_REINICIAR = sf::Color(204, 122, 250); // Magenta
 
 public:
     JuegoGUI();
     ~JuegoGUI() = default;
     
     // Métodos principales
+    void inicializarConfiguracion();
     void ejecutar();
     void inicializarJuego(const vector<string>& nombres);
+    void reiniciarJuego();
+    
+    // Métodos de configuración
+    void procesarEventosConfiguracion();
+    void cambiarCantidadJugadores(int cambio);
+    void iniciarJuegoDesdeConfiguracion();
+    void actualizarCamposNombres();
     
     // Métodos de renderizado
     void dibujarTablero();
+    void dibujarConfiguracion();
     void dibujarJugadores();
     void dibujarUI();
     

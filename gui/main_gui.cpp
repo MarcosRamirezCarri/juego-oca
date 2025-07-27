@@ -6,20 +6,12 @@
 using namespace std;
 
 int main() {
-    // Inicializar semilla para números aleatorios
-    srand(time(0));
     
     try {
         // Crear la interfaz gráfica del juego
         JuegoGUI gui;
         
-        // Configurar jugadores (por ahora hardcodeados)
-        vector<string> nombresJugadores = {"Marcos", "Valen", "Lucas", "Bauti"};
-        
-        // Inicializar el juego con la interfaz gráfica
-        gui.inicializarJuego(nombresJugadores);
-        
-        // Ejecutar el juego gráfico
+        // Ejecutar el juego gráfico (la GUI se encargará de pedir la configuración)
         gui.ejecutar();
         
     } catch (const exception& e) {

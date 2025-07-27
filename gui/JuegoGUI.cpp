@@ -8,7 +8,9 @@ using namespace std;
 JuegoGUI::JuegoGUI() 
     : window(sf::VideoMode(ANCHO_VENTANA, ALTO_VENTANA), "Juego de la Oca - POO"),
       juegoIniciado(false),
-      jugadorSeleccionado(0) {
+      jugadorSeleccionado(0),
+      cantidadJugadoresSeleccionada(2),
+      enConfiguracion(true) {
     
     // Configurar ventana
     window.setFramerateLimit(60);
@@ -24,20 +26,35 @@ JuegoGUI::JuegoGUI()
         }
     }
     
-    // Inicializar elementos de UI usando función auxiliar
-    configurarTexto(tituloJuego, "JUEGO DE LA OCA", 32, sf::Color::White, 
-                   ANCHO_VENTANA / 2 - tituloJuego.getGlobalBounds().width / 2, 10);
+    // Inicializar elementos de UI de texto
+    configurarTexto(tituloJuego, "JUEGO DE LA OCA", 40, sf::Color::White, 
+                   ANCHO_VENTANA / 2 - 200, 10);
     
-    configurarTexto(textoJugadorActual, "", 28, sf::Color::White, ANCHO_VENTANA - 1350, 160);
+    configurarTexto(textoJugadorActual, "", 28, sf::Color::White, ANCHO_VENTANA - 1450, 160);
     
-    configurarTexto(textoDado, "", 24, sf::Color::White, ANCHO_VENTANA - 900, 110);
+    configurarTexto(textoDado, "", 24, sf::Color::White, ANCHO_VENTANA - 1000, 110);
     
-    configurarTexto(textoMensaje, "", 18, sf::Color::Yellow, ANCHO_VENTANA - 500, 150);
+    configurarTexto(textoMensaje, "", 18, sf::Color::Yellow, ANCHO_VENTANA - 600, 150);
+
+    configurarTexto(textoAutores, "Creado por: Valentino Pocai y Marcos Ramirez", 20, sf::Color::White, 
+                   ANCHO_VENTANA / 2 - 200, 860);
     
     // Botón del dado
     botonDado.setSize(sf::Vector2f(140, 60));
     botonDado.setFillColor(sf::Color(70, 130, 180));
-    botonDado.setPosition(ANCHO_VENTANA - 900, 160);
+    botonDado.setPosition(ANCHO_VENTANA - 1000, 160);
+
+    // Botón de reiniciar juego
+    botonReiniciarJuego.setSize(sf::Vector2f(160, 60));
+    botonReiniciarJuego.setFillColor(COLOR_BOTON_REINICIAR);
+    botonReiniciarJuego.setPosition(ANCHO_VENTANA - 200, 10);
+    
+    configurarTexto(textoBotonReiniciar, "REINICIAR JUEGO", 16, sf::Color::White, 0, 0);
+    textoBotonReiniciar.setPosition(
+        botonReiniciarJuego.getPosition().x + botonReiniciarJuego.getSize().x / 2 - textoBotonReiniciar.getGlobalBounds().width / 2,
+        botonReiniciarJuego.getPosition().y + botonReiniciarJuego.getSize().y / 2 - textoBotonReiniciar.getGlobalBounds().height / 2
+    );
+    
     
     // Texto del boton del dado
     configurarTexto(textoBotonDado, "LANZAR DADO", 16, sf::Color::White, 0, 0);
@@ -109,17 +126,24 @@ JuegoGUI::JuegoGUI()
     }
     // Inicializar el texto del turno
     textoJugadorActual.setString("Turno: Esperando inicio del juego");
+    
+    // Inicializar pantalla de configuración
+    inicializarConfiguracion();
 }
 
 void JuegoGUI::ejecutar() {
     while (window.isOpen()) {
-        procesarEventos();
-
-        
-        window.clear(COLOR_FONDO);
-        dibujarTablero();
-        dibujarJugadores();
-        dibujarUI();
+        if (enConfiguracion) {
+            procesarEventosConfiguracion();
+            window.clear(COLOR_FONDO);
+            dibujarConfiguracion();
+        } else {
+            procesarEventos();
+            window.clear(COLOR_FONDO);
+            dibujarTablero();
+            dibujarJugadores();
+            dibujarUI();
+        }
         window.display();
     }
 }
@@ -132,7 +156,6 @@ void JuegoGUI::inicializarJuego(const vector<string>& nombres) {
     // Inicializar fichas de jugadores
     fichasJugadores.clear();
     nombresJugadores.clear();
-    inicialesJugadores.clear();
     
     vector<sf::Color> coloresFichas = {
         sf::Color::Red,
@@ -150,17 +173,10 @@ void JuegoGUI::inicializarJuego(const vector<string>& nombres) {
         ficha.setOutlineColor(sf::Color::Black);
         fichasJugadores.push_back(ficha);
         
-        // Inicial del jugador en la ficha
-        sf::Text inicial;
-        configurarTexto(inicial, string(1, nombres[i][0]), 16, sf::Color::Black, 0, 0);
-        inicial.setStyle(sf::Text::Bold);
-        // La posición se ajustará en dibujarJugadores()
-        inicialesJugadores.push_back(inicial);
-        
         // Nombre del jugador
         sf::Text nombre;
         configurarTexto(nombre, nombres[i], 20, coloresFichas[i % coloresFichas.size()], 
-                       ANCHO_VENTANA - 500, 250 + i * 30);
+                       ANCHO_VENTANA - 600, 250 + i * 30);
         nombresJugadores.push_back(nombre);
     }
     
@@ -194,16 +210,7 @@ void JuegoGUI::dibujarJugadores() {
         
         fichasJugadores[i].setPosition(pos.x + 5, pos.y + 5);
         window.draw(fichasJugadores[i]);
-        
-        // Posicionar y dibujar la inicial centrada en la ficha
-        sf::FloatRect fichaBounds = fichasJugadores[i].getGlobalBounds();
-        sf::FloatRect textoBounds = inicialesJugadores[i].getGlobalBounds();
-        
-        float x = fichaBounds.left + (fichaBounds.width - textoBounds.width) / 2;
-        float y = fichaBounds.top + (fichaBounds.height - textoBounds.height) / 2;
-        
-        inicialesJugadores[i].setPosition(x, y);
-        window.draw(inicialesJugadores[i]);
+
     }
     
     // Dibujar nombres de jugadores con sus posiciones actuales
@@ -241,21 +248,24 @@ void JuegoGUI::dibujarUI() {
     window.draw(textoMensaje);
     window.draw(botonDado);
     window.draw(textoBotonDado);
+    window.draw(botonReiniciarJuego);
+    window.draw(textoBotonReiniciar);
+    window.draw(textoAutores);
 
     // Dibujar historial de acciones
     float yHist = 400;
     sf::Text tHist;
     tHist.setFont(font);
-    tHist.setCharacterSize(16);
+    tHist.setCharacterSize(18);
     tHist.setFillColor(sf::Color::White);
     tHist.setStyle(sf::Text::Regular);
-    tHist.setPosition(ANCHO_VENTANA - 500, yHist);
+    tHist.setPosition(ANCHO_VENTANA - 600, yHist);
     tHist.setString("Historial:");
     window.draw(tHist);
     yHist += 30;
     for (const auto& linea : historial) {
         tHist.setString(linea);
-        tHist.setPosition(ANCHO_VENTANA - 500, yHist);
+        tHist.setPosition(ANCHO_VENTANA - 600, yHist);
         window.draw(tHist);
         yHist += 38;
     }
@@ -293,8 +303,14 @@ void JuegoGUI::procesarEventos() {
                         }
                         
                         textoJugadorActual.setString(turnoText);
+                      
                     }
+                    
                 }
+                // Verificar clic en botón de reiniciar juego
+                if (botonReiniciarJuego.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                 reiniciarJuego();
+                 }
             }
         }
     }
@@ -336,6 +352,167 @@ void JuegoGUI::configurarTexto(sf::Text& texto, const string& contenido, int tam
     texto.setCharacterSize(tamano);
     texto.setFillColor(color);
     texto.setPosition(x, y);
+}
+
+// Métodos de configuración
+void JuegoGUI::inicializarConfiguracion() {
+    // Título de configuración
+    configurarTexto(textoConfiguracion, "CONFIGURACION DEL JUEGO", 40, sf::Color::White, 
+                   ANCHO_VENTANA / 2 - 300, 10);
+    
+    // Texto de cantidad de jugadores
+    configurarTexto(textoCantidadJugadores, "Cantidad de Jugadores: 2", 24, sf::Color::White, 
+                   ANCHO_VENTANA / 2 - 150, 150);
+    
+    // Botones para cambiar cantidad de jugadores
+    botonMenosJugadores.setSize(sf::Vector2f(50, 50));
+    botonMenosJugadores.setFillColor(sf::Color(100, 100, 100));
+    botonMenosJugadores.setPosition(ANCHO_VENTANA / 2 - 250, 140);
+    
+    botonMasJugadores.setSize(sf::Vector2f(50, 50));
+    botonMasJugadores.setFillColor(sf::Color(100, 100, 100));
+    botonMasJugadores.setPosition(ANCHO_VENTANA / 2 + 250, 140);
+    
+    configurarTexto(textoMenosJugadores, "-", 30, sf::Color::White, 
+                   ANCHO_VENTANA / 2 - 230, 145);
+    configurarTexto(textoMasJugadores, "+", 30, sf::Color::White, 
+                   ANCHO_VENTANA / 2 + 260, 145);
+    
+    // Botón iniciar juego
+    botonIniciarJuego.setSize(sf::Vector2f(200, 60));
+    botonIniciarJuego.setFillColor(sf::Color(70, 130, 180));
+    botonIniciarJuego.setPosition(ANCHO_VENTANA / 2 - 100, 400);
+    
+    configurarTexto(textoIniciarJuego, "INICIAR JUEGO", 20, sf::Color::White, 
+                   ANCHO_VENTANA / 2 - 80, 415);
+    
+    // Inicializar campos de nombres
+    actualizarCamposNombres();
+}
+
+void JuegoGUI::actualizarCamposNombres() {
+    camposNombres.clear();
+    rectangulosNombres.clear();
+    
+    for (int i = 0; i < cantidadJugadoresSeleccionada; i++) {
+        // Rectángulo para el campo de texto
+        sf::RectangleShape rect;
+        rect.setSize(sf::Vector2f(200, 30));
+        rect.setFillColor(sf::Color::White);
+        rect.setOutlineColor(sf::Color::Black);
+        rect.setOutlineThickness(2);
+        rect.setPosition(ANCHO_VENTANA / 2 - 100, 220 + i * 40);
+        rectangulosNombres.push_back(rect);
+        
+        // Texto del campo
+        sf::Text campo;
+        string nombrePorDefecto = "Jugador " + to_string(i + 1);
+        configurarTexto(campo, nombrePorDefecto, 16, sf::Color::Black, 
+                       ANCHO_VENTANA / 2 - 95, 225 + i * 40);
+        camposNombres.push_back(campo);
+    }
+}
+
+void JuegoGUI::dibujarConfiguracion() {
+    // Dibujar título
+    window.draw(textoConfiguracion);
+    
+    // Dibujar cantidad de jugadores
+    window.draw(textoCantidadJugadores);
+    window.draw(botonMenosJugadores);
+    window.draw(botonMasJugadores);
+    window.draw(textoMenosJugadores);
+    window.draw(textoMasJugadores);
+    
+    // Dibujar campos de nombres
+    for (const auto& rect : rectangulosNombres) {
+        window.draw(rect);
+    }
+    for (const auto& campo : camposNombres) {
+        window.draw(campo);
+    }
+    
+    // Dibujar botón iniciar
+    window.draw(botonIniciarJuego);
+    window.draw(textoIniciarJuego);
+}
+
+void JuegoGUI::procesarEventosConfiguracion() {
+    sf::Event event;
+    while (window.pollEvent(event)) {
+        if (event.type == sf::Event::Closed) {
+            window.close();
+        }
+        
+        if (event.type == sf::Event::MouseButtonPressed) {
+            if (event.mouseButton.button == sf::Mouse::Left) {
+                sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+                
+                // Verificar clic en botón menos jugadores
+                if (botonMenosJugadores.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                    cambiarCantidadJugadores(-1);
+                }
+                
+                // Verificar clic en botón más jugadores
+                if (botonMasJugadores.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                    cambiarCantidadJugadores(1);
+                }
+                
+                // Verificar clic en botón iniciar juego
+                if (botonIniciarJuego.getGlobalBounds().contains(mousePos.x, mousePos.y)) {
+                    iniciarJuegoDesdeConfiguracion();
+                }
+            }
+        }
+    }
+}
+
+void JuegoGUI::cambiarCantidadJugadores(int cambio) {
+    int nuevaCantidad = cantidadJugadoresSeleccionada + cambio;
+    if (nuevaCantidad >= 2 && nuevaCantidad <= 4) {
+        cantidadJugadoresSeleccionada = nuevaCantidad;
+        textoCantidadJugadores.setString("Cantidad de Jugadores: " + to_string(cantidadJugadoresSeleccionada));
+        actualizarCamposNombres();
+    }
+}
+
+void JuegoGUI::iniciarJuegoDesdeConfiguracion() {
+    // Recopilar nombres de jugadores
+    vector<string> nombres;
+    for (const auto& campo : camposNombres) {
+        string nombre = campo.getString().toAnsiString();
+        if (nombre.empty()) {
+            nombre = "Jugador " + to_string(nombres.size() + 1);
+        }
+        nombres.push_back(nombre);
+    }
+    
+    // Inicializar el juego
+    inicializarJuego(nombres);
+    enConfiguracion = false;
+}
+
+void JuegoGUI::reiniciarJuego() {
+    // Limpiar el juego actual
+    if (juego) {
+        juego.reset();
+    }
+    
+    // Limpiar vectores de jugadores
+    fichasJugadores.clear();
+    nombresJugadores.clear();
+    historial.clear();
+    
+    // Reiniciar variables de estado
+    juegoIniciado = false;
+    enConfiguracion = true;
+    cantidadJugadoresSeleccionada = 2;
+    
+    // Reinicializar la pantalla de configuración
+    inicializarConfiguracion();
+    
+    // Actualizar el texto de cantidad de jugadores
+    textoCantidadJugadores.setString("Cantidad de Jugadores: " + to_string(cantidadJugadoresSeleccionada));
 }
 
  
