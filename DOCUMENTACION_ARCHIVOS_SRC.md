@@ -139,6 +139,7 @@ Clase central que coordina toda la lógica del juego, manejando turnos, movimien
 - **Estado del juego**: Mantiene información sobre si el juego está activo
 - **Integración con GUI**: Es la clase que conecta todas las demas para interactuar con la GUI
 - **Detección de ganador**: Identifica cuando un jugador gana el juego
+- **Reinicio del juego**: Regresa todos los jugadores a la posicion 0 reiniciando el mismo
 
 ### **Estructura del Código**
 ```cpp
@@ -156,6 +157,7 @@ public:
     // Métodos de juego principal
     // Métodos de consulta de estado
     // Métodos de integración con GUI
+    // Método de reinicio
 };
 ```
 
@@ -181,6 +183,11 @@ public:
 - `const Jugador& obtenerJugador(int index) const`: Obtiene información de un jugador
 - `void mostrarEstadoJuego() const`: Muestra el estado actual del juego
 
+### **Reinicio del juego**
+- Retorna todos los jugadores a la casilla numero 0
+- Limpia sus estados, pasa enPozo=false y jugador.perderTurnos(-jugador.getTurnosPerdidos()) resetea los turnos perdidos.
+- Vuelve a iniciar el dado y las casillas.
+
 ### **Flujo de un Turno**
 1. **Lanzar dado**: Se genera un número aleatorio del 1 al 6
 2. **Calcular nueva posición**: Se suma el resultado del dado a la posición actual
@@ -188,11 +195,6 @@ public:
 4. **Aplicar efectos de casilla**: Se ejecuta la acción de la casilla destino
 5. **Verificar ganador**: Si llega exactamente a 63, gana
 6. **Actualizar turno**: Se pasa al siguiente jugador (si no hay turno extra)
-
-### **Integración**
-- **Coordinador central**: Utiliza todas las demás clases del proyecto
-- **Patrón Observer**: Se conecta con la GUI para notificar cambios
-- **Gestión de memoria**: Utiliza smart pointers para las casillas del tablero
 
 ---
 

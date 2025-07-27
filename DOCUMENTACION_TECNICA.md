@@ -95,6 +95,8 @@ Finalmente, el proyecto utiliza `std::string` en lugar de C-style strings, aprov
 ### 7. Interfaz de Usuario
 
 #### 7.1 Interfaz Gráfica con SFML
+Se eligió SFML sobre QT debido a la facilidad de implementación que tiene, esta mas orientado a videojuegos que QT y permite las entradas de audio, teclado y ratón lo cual puede ser util para futuras implementaciones. Por ultimo SFML es mucho más simple y directo.
+
 La interfaz gráfica del juego está implementada usando la biblioteca SFML (Simple and Fast Multimedia Library). La interfaz presenta el tablero de juego de manera visual, con representaciones gráficas de las casillas, jugadores y elementos del juego.
 
 La clase `JuegoGUI` actúa como el controlador principal de la interfaz, manejando la renderización, eventos de usuario y la comunicación con la lógica del juego. Esta separación entre la lógica del juego y la interfaz gráfica sigue el patrón Model-View-Controller (MVC), facilitando el mantenimiento y la extensión del código.

@@ -52,11 +52,15 @@ public:
     int obtenerJugadorActual() const;
     bool estaJugando() const;
     
-    // Metodo para lanzar el dado, jugar el turno y devolver el resultado
+    //Metodo para reiniciar el juego
+    void reiniciarJuego();
+
+    // Metodo para lanzar el dado, jugar el turno y devolver el resultado (informa a la interfaz gráfica)
     ResultadoTurno lanzarDadoYJugarTurno();
     
     // Método para conectar con la interfaz gráfica
     void setGUI(JuegoGUI* interfaz);
+
 };
 
 #endif // JUEGO_H 

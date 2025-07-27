@@ -54,6 +54,27 @@ void Juego::iniciarJuego() {
     }
 }
 
+void Juego::reiniciarJuego() {
+    finDelJuego = false;
+    jugadorActual = 0;
+    turnoExtra = false;
+
+    // Reiniciar completamente el estado de todos los jugadores
+    for (auto& jugador : jugadores) {
+        jugador.moverJugador(0);  // Posición inicial
+        jugador.perderTurnos(-jugador.getTurnosPerdidos());  // Resetear turnos perdidos
+        if (jugador.estaEnPozo()) {
+            jugador.salirPozo();  // Sacar del pozo si está atrapado
+        }
+    }
+
+    // Reiniciar el dado
+    dado = make_unique<Dado>();
+
+    // Reiniciar las casillas
+    inicializarCasillas();
+}
+
 void Juego::jugarTurno() {
     Jugador& jugador = jugadores[jugadorActual];
     
