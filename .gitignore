@@ -39,3 +39,22 @@
 
 # debug information files
 *.dwo
+
+# CMake / builds
+build/
+build-*/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+install_manifest.txt
+
+# Qt Creator
+*.user
+CMakeLists.txt.user
+.qtc/
+.qt/
+*.pro.user
+
+# Binario SFML sin extensión
+gui/juego_oca_gui
