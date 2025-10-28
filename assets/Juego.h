@@ -29,13 +29,16 @@ private:
     bool finDelJuego;
     bool turnoExtra;
     JuegoGUI* gui;
+    int meta; // última casilla (meta)
+    bool especialesAleatorios;
+    int posicionPozo;
     
     // Métodos privados para manejar el tablero
     void inicializarCasillas();
     Casilla* obtenerCasilla(int numero) const;
 
 public:
-    Juego(const vector<string>& nombresJugadores);
+    Juego(const vector<string>& nombresJugadores, int meta = 63, bool especialesAleatorios = false);
     ~Juego();
     
     void iniciarJuego();
@@ -51,6 +54,8 @@ public:
     int obtenerCantidadJugadores() const;
     int obtenerJugadorActual() const;
     bool estaJugando() const;
+    int obtenerMeta() const { return meta; }
+    string obtenerNombreCasilla(int numero) const;
     
     //Metodo para reiniciar el juego
     void reiniciarJuego();

@@ -11,6 +11,7 @@ class Casilla {
 protected:
     int numeroCasilla;
     string nombre;
+    // Nota: Las casillas especiales pueden necesitar parámetros adicionales
 
 public:
     Casilla(int numero, const string& nombre);
@@ -32,24 +33,30 @@ public:
 
 // Casilla de Oca
 class CasillaOca : public Casilla {
+private:
+    int destinoOca; // siguiente casilla de oca (o meta)
 public:
-    CasillaOca(int numero);
+    CasillaOca(int numero, int destino);
     void accionJugador(Jugador& jugador) override;
     string getDescripcion() const override;
 };
 
 // Casilla Puente
 class CasillaPuente : public Casilla {
+private:
+    int destino;
 public:
-    CasillaPuente();
+    CasillaPuente(int numero, int destino);
     void accionJugador(Jugador& jugador) override;
     string getDescripcion() const override;
 };
 
 // Casilla Posada
 class CasillaPosada : public Casilla {
+private:
+    int turnos;
 public:
-    CasillaPosada();
+    CasillaPosada(int numero, int turnos = 1);
     void accionJugador(Jugador& jugador) override;
     string getDescripcion() const override;
 };
@@ -57,31 +64,37 @@ public:
 // Casilla Pozo
 class CasillaPozo : public Casilla {
 public:
-    CasillaPozo();
+    CasillaPozo(int numero);
     void accionJugador(Jugador& jugador) override;
     string getDescripcion() const override;
 };
 
 // Casilla Laberinto
 class CasillaLaberinto : public Casilla {
+private:
+    int destino;
 public:
-    CasillaLaberinto();
+    CasillaLaberinto(int numero, int destino);
     void accionJugador(Jugador& jugador) override;
     string getDescripcion() const override;
 };
 
 // Casilla Cárcel
 class CasillaCarcel : public Casilla {
+private:
+    int turnos;
 public:
-    CasillaCarcel();
+    CasillaCarcel(int numero, int turnos = 2);
     void accionJugador(Jugador& jugador) override;
     string getDescripcion() const override;
 };
 
 // Casilla Calavera
 class CasillaCalavera : public Casilla {
+private:
+    int destino;
 public:
-    CasillaCalavera();
+    CasillaCalavera(int numero, int destino = 1);
     void accionJugador(Jugador& jugador) override;
     string getDescripcion() const override;
 };
@@ -89,7 +102,7 @@ public:
 // Casilla Jardín de la Oca
 class CasillaJardin : public Casilla {
 public:
-    CasillaJardin();
+    CasillaJardin(int numero);
     void accionJugador(Jugador& jugador) override;
     string getDescripcion() const override;
 };

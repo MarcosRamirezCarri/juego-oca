@@ -6,7 +6,7 @@ La carpeta `src/` contiene toda la lógica del juego "Juego de la Oca" implement
 
 
 ### **Integración**
-- Utiliza la clase `Juego` para toda la lógica del juego. Se conecta con  `Jugador`, `Dado` y `Casilla`. Toda esta logica se implementa al juego realmente mediante juegoGui, el cual asigna una interfaz a cada elemento. Luego en el archivo habra una explicacion de el GUI
+- Utiliza la clase `Juego` para toda la lógica del juego. Se conecta con `Jugador`, `Dado` y `Casilla`. La interfaz gráfica se implementa con Qt en `qt/MainWindow.{h,cpp}` usando `QGraphicsView/QGraphicsScene` para dibujar el tablero y gestionar el flujo del juego (ver sección de GUI al final).
 
 ---
 # Explicacion de las clases:
@@ -20,10 +20,10 @@ Implementa la funcionalidad del dado del juego, generando números aleatorios de
 ```cpp
 class Dado {
 public:
-    Dado();           // Constructor que inicializa el generador
-    int lanzar();     // Retorna un número aleatorio entre 1-6
+    Dado(int caras = 6);   // Constructor con cantidad de caras (por defecto 6)
+    int lanzar();          // Retorna un número aleatorio entre 1 y 'caras'
 private:
- // Caras de dado
+    int carasDelDado;
 };
 ```
 
@@ -77,37 +77,31 @@ Implementa el sistema de casillas especiales del juego, cada una con comportamie
 - **Efectos dinámicos**: Cada casilla tiene su propia lógica de acción
 - **Interacción con jugadores**: Modifica el estado de los jugadores según la casilla
 
-### **Tipos de Casillas Implementadas**
+### **Tipos de Casillas Implementadas (parámetros dinámicos)**
 
 #### **CasillaNormal**
 - No tiene efecto especial
 - Base para otras casillas
 
 #### **CasillaOca**
-- Avanza el jugador a la siguiente oca
-- Otorga un turno extra
+- Avanza el jugador a la siguiente oca (o a la meta si es la última)
+- Otorga un turno extra (gestionado por `Juego` al detectar casilla "Oca")
 
 #### **CasillaPuente**
-- Mueve al jugador a la casilla 12
-- Otorga un turno extra
+- Mueve al jugador a una casilla destino configurable
 
 #### **CasillaPosada**
-- El jugador pierde 1 turno
+- El jugador pierde una cantidad configurable de turnos (por defecto 1)
 
 #### **CasillaPozo**
 - El jugador queda atrapado hasta que otro caiga
 - Libera al jugador anterior cuando alguien más cae
 
 #### **CasillaLaberinto**
-- Mueve al jugador a la casilla 30
-- Pierde 1 turno
+- Mueve al jugador a una casilla destino configurable (retroceso)
 
 #### **CasillaCarcel**
-- El jugador pierde 3 turnos
-
-#### **CasillaDados**
-- Mueve al jugador a la casilla 26 o 53
-- Otorga un turno extra
+- El jugador pierde una cantidad configurable de turnos (por defecto 2)
 
 #### **CasillaJardin**
 - El jugador gana automáticamente
@@ -146,25 +140,49 @@ Clase central que coordina toda la lógica del juego, manejando turnos, movimien
 class Juego {
 private:
     vector<Jugador> jugadores;
-    Tablero tablero;
-    Dado dado;
+    vector<unique_ptr<Casilla>> casillas; // 1..meta
+    unique_ptr<Dado> dado;
+    int cantidadJugadores;
     int jugadorActual;
-    bool jugando;
-    JuegoGUI* gui;  // Para integración con GUI
-    
+    bool finDelJuego;
+    bool turnoExtra;
+    int meta;                   // última casilla del tablero (63–90)
+    bool especialesAleatorios;  // si se generan casillas especiales al azar
+    int posicionPozo;           // posición del pozo (si existe)
+
+    void inicializarCasillas();
+    Casilla* obtenerCasilla(int numero) const;
+
 public:
-    // Constructores y configuración
-    // Métodos de juego principal
-    // Métodos de consulta de estado
-    // Métodos de integración con GUI
-    // Método de reinicio
+    Juego(const vector<string>& nombresJugadores,
+          int meta = 63,
+          bool especialesAleatorios = false);
+
+    // Bucle y flujo de juego
+    void jugarTurno();
+    ResultadoTurno lanzarDadoYJugarTurno();
+    bool verificarGanador() const;
+    void procesarMovimiento(int jugadorIndex, int nuevaPosicion);
+    void liberarJugadoresDelPozo(int jugadorQueCayo);
+    void pasarTurno();
+
+    // Consultas para la GUI
+    const Jugador& obtenerJugador(int index) const;
+    int obtenerCantidadJugadores() const;
+    int obtenerJugadorActual() const;
+    bool estaJugando() const;
+    int obtenerMeta() const;
+    string obtenerNombreCasilla(int numero) const;
+
+    // Reinicio completo
+    void reiniciarJuego();
 };
 ```
 
 ### **Métodos Principales**
 
 #### **Gestión del Juego**
-- `Juego(vector<string> nombres)`: Constructor que inicializa el juego
+- `Juego(vector<string> nombres, int meta, bool especialesAleatorios)`: Constructor que inicializa jugadores, dado, meta (63–90) y, según corresponda, genera casillas especiales al azar.
 - `bool estaJugando() const`: Verifica si el juego está activo
 - `void terminarJuego()`: Finaliza el juego
 
@@ -181,6 +199,8 @@ public:
 #### **Consultas de Estado**
 - `int obtenerJugadorActual() const`: Retorna el índice del jugador actual
 - `const Jugador& obtenerJugador(int index) const`: Obtiene información de un jugador
+- `int obtenerMeta() const`: Devuelve la meta actual del tablero
+- `string obtenerNombreCasilla(int numero) const`: Devuelve el nombre de la casilla para que la GUI pinte etiquetas/colores
 - `void mostrarEstadoJuego() const`: Muestra el estado actual del juego
 
 ### **Reinicio del juego**
@@ -191,23 +211,21 @@ public:
 ### **Flujo de un Turno**
 1. **Lanzar dado**: Se genera un número aleatorio del 1 al 6
 2. **Calcular nueva posición**: Se suma el resultado del dado a la posición actual
-3. **Verificar límites**: Si supera 63, rebota hacia atrás
-4. **Aplicar efectos de casilla**: Se ejecuta la acción de la casilla destino
-5. **Verificar ganador**: Si llega exactamente a 63, gana
-6. **Actualizar turno**: Se pasa al siguiente jugador (si no hay turno extra)
+3. **Verificar límites**: Si supera la meta, rebota hacia atrás (reflejo)
+4. **Aplicar efectos de casilla**: Se ejecuta la acción de la casilla destino (pozo permite múltiples jugadores)
+5. **Verificar ganador**: Si llega exactamente a la meta, gana
+6. **Actualizar turno**: Se pasa al siguiente jugador (si no hay turno extra por Oca)
 
 ---
 
 ## Estructura entre los Archivos
 
 ```
-mainGUI.cpp
+qt/MainWindow.cpp  (Qt GUI)
 |   ↓ (usa)
-JuegoGUI.cpp
-|   ↓ (observa)
-Juego.cpp
+Juego.cpp          (lógica)
 |  ↓ (usa)
-├── Casilla.cpp (polimórfico)
+├── Casilla.cpp    (polimórfico)
 ├── Jugador.cpp
 └── Dado.cpp
 ```
@@ -240,7 +258,7 @@ Juego.cpp
 
 ### **Compatibilidad**
 - **Cross-platform**: Funciona en Linux y Windows
-- **Dependencias**: Solo requiere la biblioteca estándar de C++ y SFML para hacer correr el GUI
+- **Dependencias**: Requiere la biblioteca estándar de C++ y Qt para la interfaz gráfica
 
 
 Esta documentación proporciona una comprensión completa de cómo cada archivo contribuye al funcionamiento del juego y cómo se relacionan entre sí para crear una experiencia de juego cohesiva y bien estructurada. 

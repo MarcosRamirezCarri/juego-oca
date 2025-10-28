@@ -30,22 +30,12 @@ string CasillaNormal::getDescripcion() const {
 }
 
 // Implementación de CasillaOca
-CasillaOca::CasillaOca(int numero) 
-    : Casilla(numero, "Oca") {
+CasillaOca::CasillaOca(int numero, int destino) 
+    : Casilla(numero, "Oca"), destinoOca(destino) {
 }
 
 void CasillaOca::accionJugador(Jugador& jugador) {
-    int posicionActual = jugador.conseguirPosicion();
-    int siguienteOca;
-    
-    // Determinar la siguiente casilla de oca
-    if (posicionActual == 54) {
-        siguienteOca = 63; // Jardín de la Oca (caso especial)
-    } else {
-        siguienteOca = posicionActual + 9; // Sumar 9 para ir a la siguiente oca
-    }
-    
-    jugador.moverJugador(siguienteOca);
+    jugador.moverJugador(destinoOca);
 }
 
 string CasillaOca::getDescripcion() const {
@@ -53,12 +43,12 @@ string CasillaOca::getDescripcion() const {
 }
 
 // Implementación de CasillaPuente
-CasillaPuente::CasillaPuente() 
-    : Casilla(6, "Puente") {
+CasillaPuente::CasillaPuente(int numero, int destino_) 
+    : Casilla(numero, "Puente"), destino(destino_) {
 }
 
 void CasillaPuente::accionJugador(Jugador& jugador) {
-    jugador.moverJugador(12);
+    jugador.moverJugador(destino);
 }
 
 string CasillaPuente::getDescripcion() const {
@@ -66,12 +56,12 @@ string CasillaPuente::getDescripcion() const {
 }
 
 // Implementación de CasillaPosada
-CasillaPosada::CasillaPosada() 
-    : Casilla(19, "Posada") {
+CasillaPosada::CasillaPosada(int numero, int turnos_) 
+    : Casilla(numero, "Posada"), turnos(turnos_) {
 }
 
 void CasillaPosada::accionJugador(Jugador& jugador) {
-    jugador.perderTurnos(1);
+    jugador.perderTurnos(turnos);
 }
 
 string CasillaPosada::getDescripcion() const {
@@ -79,8 +69,8 @@ string CasillaPosada::getDescripcion() const {
 }
 
 // Implementación de CasillaPozo
-CasillaPozo::CasillaPozo() 
-    : Casilla(31, "Pozo") {
+CasillaPozo::CasillaPozo(int numero) 
+    : Casilla(numero, "Pozo") {
 }
 
 void CasillaPozo::accionJugador(Jugador& jugador) {
@@ -92,12 +82,12 @@ string CasillaPozo::getDescripcion() const {
 }
 
 // Implementación de CasillaLaberinto
-CasillaLaberinto::CasillaLaberinto() 
-    : Casilla(42, "Laberinto") {
+CasillaLaberinto::CasillaLaberinto(int numero, int destino_) 
+    : Casilla(numero, "Laberinto"), destino(destino_) {
 }
 
 void CasillaLaberinto::accionJugador(Jugador& jugador) {
-    jugador.moverJugador(30);
+    jugador.moverJugador(destino);
 }
 
 string CasillaLaberinto::getDescripcion() const {
@@ -105,12 +95,12 @@ string CasillaLaberinto::getDescripcion() const {
 }
 
 // Implementación de CasillaCarcel
-CasillaCarcel::CasillaCarcel() 
-    : Casilla(56, "Cárcel") {
+CasillaCarcel::CasillaCarcel(int numero, int turnos_) 
+    : Casilla(numero, "Cárcel"), turnos(turnos_) {
 }
 
 void CasillaCarcel::accionJugador(Jugador& jugador) {
-    jugador.perderTurnos(2);
+    jugador.perderTurnos(turnos);
 }
 
 string CasillaCarcel::getDescripcion() const {
@@ -118,12 +108,12 @@ string CasillaCarcel::getDescripcion() const {
 }
 
 // Implementación de CasillaCalavera
-CasillaCalavera::CasillaCalavera() 
-    : Casilla(58, "Calavera") {
+CasillaCalavera::CasillaCalavera(int numero, int destino_) 
+    : Casilla(numero, "Calavera"), destino(destino_) {
 }
 
 void CasillaCalavera::accionJugador(Jugador& jugador) {
-    jugador.moverJugador(1);
+    jugador.moverJugador(destino);
 }
 
 string CasillaCalavera::getDescripcion() const {
@@ -131,8 +121,8 @@ string CasillaCalavera::getDescripcion() const {
 }
 
 // Implementación de CasillaJardin
-CasillaJardin::CasillaJardin() 
-    : Casilla(63, "Jardín de la Oca") {
+CasillaJardin::CasillaJardin(int numero) 
+    : Casilla(numero, "Jardín de la Oca") {
 }
 
 void CasillaJardin::accionJugador(Jugador& jugador) {

@@ -41,10 +41,14 @@ private:
 
     // Métodos auxiliares
     void buildBoard();
-    QPointF cellPos(int cellIndex) const; // 0..63
+    QPointF cellPos(int cellIndex) const; // 0..meta
     void syncPlayers();
-    void initGame(const std::vector<std::string>& nombres);
+    void initGame(const std::vector<std::string>& nombres, int meta, bool especialesAleatorios);
     void showConfigDialog();
+
+    // Config actual
+    int boardMeta_ = 63;
+    bool randomSpecials_ = false;
 };
 
 #endif // MAINWINDOW_H

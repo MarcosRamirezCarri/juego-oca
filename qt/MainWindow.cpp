@@ -8,6 +8,7 @@
 #include <QGraphicsTextItem>
 #include <QFont>
 #include <QTimer>
+#include <QCheckBox>
 
 static const int ANCHO_VENTANA = 1500;
 static const int ALTO_VENTANA = 900;
@@ -73,21 +74,35 @@ MainWindow::~MainWindow() = default;
 
 void MainWindow::buildBoard() {
     boardScene->clear();
-    // Dibujar casillas 0..63
-    for (int i = 0; i < 64; ++i) {
+    const int meta = boardMeta_;
+    // Dibujar casillas 0..meta
+    for (int i = 0; i <= meta; ++i) {
         QPointF p = cellPos(i);
         QRectF r(p.x(), p.y(), TAMANO_CASILLA, TAMANO_CASILLA);
 
         QColor fill(255, 255, 255);
-        // Colores especiales similares a la GUI SFML
-        if (i == 6) fill = QColor(255, 120, 0);           // Puente
-        else if (i == 19) fill = QColor(255, 120, 0);      // Posada
-        else if (i == 31) fill = QColor(255, 38, 38);      // Pozo
-        else if (i == 42) fill = QColor(69, 128, 252);     // Laberinto
-        else if (i == 56) fill = QColor(69, 69, 69);       // Carcel
-        else if (i == 58) fill = QColor(153, 122, 111);    // Calavera
-        else if (i == 63) fill = QColor(49, 255, 0);       // Meta
-        else if (i % 9 == 0 && i <= 54 && i > 0) fill = QColor(255, 215, 0); // Ocas
+        // Colores: consultamos el nombre real si existe juego, si no usamos heurística
+        QString name;
+        if (juego) {
+            std::string n = (i == 0) ? std::string("") : juego->obtenerNombreCasilla(i);
+            if (n == "Puente") { fill = QColor(255, 120, 0); name = "PUENTE"; }
+            else if (n == "Posada") { fill = QColor(255, 120, 0); name = "POSADA"; }
+            else if (n == "Pozo") { fill = QColor(255, 38, 38); name = "POZO"; }
+            else if (n == "Laberinto") { fill = QColor(69, 128, 252); name = "LABERINTO"; }
+            else if (n == "Cárcel") { fill = QColor(69, 69, 69); name = "CARCEL"; }
+            else if (n == "Calavera") { fill = QColor(153, 122, 111); name = "CALAVERA"; }
+            else if (i == meta) { fill = QColor(49, 255, 0); name = "META"; }
+            else if (n == "Oca") { fill = QColor(255, 215, 0); name = "OCA"; }
+        } else {
+            if (i == 6) fill = QColor(255, 120, 0);
+            else if (i == 19) fill = QColor(255, 120, 0);
+            else if (i == 31) fill = QColor(255, 38, 38);
+            else if (i == 42) fill = QColor(69, 128, 252);
+            else if (i == 56) fill = QColor(69, 69, 69);
+            else if (i == 58) fill = QColor(153, 122, 111);
+            else if (i == meta) fill = QColor(49, 255, 0);
+            else if (i % 9 == 0 && i < meta && i > 0) fill = QColor(255, 215, 0);
+        }
 
         auto* rect = boardScene->addRect(r, QPen(Qt::black, 2), QBrush(fill));
         // Número
@@ -95,19 +110,6 @@ void MainWindow::buildBoard() {
         tNum->setDefaultTextColor(Qt::black);
         tNum->setPos(p.x() + 2, p.y() + 2);
         // Nombre
-        QString name;
-        switch (i) {
-        case 6: name = "PUENTE"; break;
-        case 19: name = "POSADA"; break;
-        case 31: name = "POZO"; break;
-        case 42: name = "LABERINTO"; break;
-        case 56: name = "CARCEL"; break;
-        case 58: name = "CALAVERA"; break;
-        case 63: name = "META"; break;
-        default:
-            if (i % 9 == 0 && i <= 54 && i > 0) name = "OCA";
-            break;
-        }
         if (!name.isEmpty()) {
             auto* tName = boardScene->addText(name);
             tName->setDefaultTextColor(Qt::black);
@@ -127,8 +129,10 @@ QPointF MainWindow::cellPos(int numeroCasilla) const {
     return QPointF(x, y);
 }
 
-void MainWindow::initGame(const std::vector<std::string>& nombres) {
-    juego = std::make_unique<Juego>(nombres);
+void MainWindow::initGame(const std::vector<std::string>& nombres, int meta, bool especialesAleatorios) {
+    boardMeta_ = meta;
+    randomSpecials_ = especialesAleatorios;
+    juego = std::make_unique<Juego>(nombres, meta, especialesAleatorios);
     // No necesitamos setGUI aquí; la GUI se sincroniza leyendo el estado
     syncPlayers();
     // Texto de turno inicial
@@ -146,6 +150,7 @@ void MainWindow::initGame(const std::vector<std::string>& nombres) {
         if (j.getTurnosPerdidos() > 0) s += QString(" - Pierde %1 turnos").arg(j.getTurnosPerdidos());
         playersList->addItem(s);
     }
+    buildBoard();
 }
 
 void MainWindow::syncPlayers() {
@@ -217,6 +222,7 @@ void MainWindow::onRestart() {
     int actual = juego->obtenerJugadorActual();
     turnLabel->setText(QString::fromStdString("Turno: " + juego->obtenerJugador(actual).conseguirNombre()));
     syncPlayers();
+    buildBoard();
 }
 
 void MainWindow::showConfigDialog() {
@@ -229,6 +235,19 @@ void MainWindow::showConfigDialog() {
     spin->setValue(2);
     v->addWidget(lnum);
     v->addWidget(spin);
+
+    // Meta
+    QLabel* lmeta = new QLabel("Casillas del tablero (63-90):", &dlg);
+    QSpinBox* spinMeta = new QSpinBox(&dlg);
+    spinMeta->setRange(63, 90);
+    spinMeta->setValue(boardMeta_);
+    v->addWidget(lmeta);
+    v->addWidget(spinMeta);
+
+    // Especiales aleatorios
+    QCheckBox* chkAleatorio = new QCheckBox("Generar casillas especiales al azar", &dlg);
+    chkAleatorio->setChecked(randomSpecials_);
+    v->addWidget(chkAleatorio);
 
     // Contenedores de nombres
     std::vector<QLineEdit*> edits;
@@ -261,10 +280,12 @@ void MainWindow::showConfigDialog() {
             if (t.isEmpty()) t = QString("Jugador %1").arg(i + 1);
             nombres.push_back(t.toStdString());
         }
-        initGame(nombres);
+        int meta = spinMeta->value();
+        bool ale = chkAleatorio->isChecked();
+        initGame(nombres, meta, ale);
     } else {
         // fallback por si cancelan: 2 por defecto
-        initGame({"Jugador 1", "Jugador 2"});
+        initGame({"Jugador 1", "Jugador 2"}, boardMeta_, randomSpecials_);
     }
 }
 

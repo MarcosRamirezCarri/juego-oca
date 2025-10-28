@@ -20,16 +20,16 @@ El polimorfismo se manifiesta en la capacidad de tratar todas las casillas de ma
 Este enfoque polimórfico elimina la necesidad de usar múltiples declaraciones `if-else` o `switch` para determinar qué hacer según el tipo de casilla. En su lugar, cada subclase implementa su propia lógica, y el sistema de enlace dinámico de C++ se encarga de llamar al método correcto. Esto hace que el código sea más limpio, más fácil de mantener y más extensible.
 
 #### 1.4 Composición
-La composición se utiliza para construir objetos complejos a partir de objetos más simples. La clase `Juego` contiene instancias de `Jugador`, `Dado` y un vector de casillas, mientras que `JuegoGUI` contiene una instancia de `Juego` y maneja la interfaz gráfica. Esta estructura refleja las relaciones naturales del dominio del problema: un juego tiene jugadores, un dado y casillas, y una interfaz gráfica tiene un juego.
+La composición se utiliza para construir objetos complejos a partir de objetos más simples. La clase `Juego` contiene instancias de `Jugador`, `Dado` y un vector de casillas, mientras que la ventana principal `MainWindow` (Qt) contiene una instancia de `Juego` y maneja la interfaz gráfica. Esta estructura refleja las relaciones naturales del dominio del problema: un juego tiene jugadores, un dado y casillas, y una interfaz gráfica tiene un juego.
 
-La composición se implementa usando smart pointers (`std::unique_ptr`) para gestionar automáticamente el ciclo de vida de los objetos compuestos. Esto garantiza que cuando se destruye un objeto `JuegoGUI`, todos sus componentes se liberan automáticamente, previniendo memory leaks y simplificando la gestión de memoria.
+La composición se implementa usando smart pointers (`std::unique_ptr`) para gestionar automáticamente el ciclo de vida de los objetos compuestos. Esto garantiza que cuando se destruye un objeto `MainWindow`, todos sus componentes se liberan automáticamente, previniendo memory leaks y simplificando la gestión de memoria.
 
 ### 3. Análisis de Clases
 
 #### 3.1 Clase Juego
-La clase `Juego` actúa como el orquestador principal del sistema, coordinando todas las interacciones entre los diferentes componentes. Su responsabilidad principal es controlar el flujo del juego, gestionando los turnos de los jugadores, aplicando las reglas del juego y verificando las condiciones de victoria.
+La clase `Juego` actúa como el orquestador principal del sistema, coordinando todas las interacciones entre los diferentes componentes. Su responsabilidad principal es controlar el flujo del juego, gestionando los turnos de los jugadores, aplicando las reglas del juego y verificando las condiciones de victoria. Ahora soporta una meta dinámica (63–90) y una generación opcional de casillas especiales al azar.
 
-Esta clase mantiene el estado global del juego a través de varios atributos clave. El vector `jugadores` almacena todas las instancias de jugadores participantes, permitiendo un número variable de jugadores (típicamente entre 2 y 4). El smart pointer `dado` y el vector `casillas` representan los componentes fundamentales del juego, gestionando automáticamente su ciclo de vida. El `jugadorActual` mantiene un seguimiento del turno actual, mientras que `finDelJuego` controla el estado de terminación del juego.
+Esta clase mantiene el estado global del juego a través de varios atributos clave. El vector `jugadores` almacena todas las instancias de jugadores participantes, permitiendo un número variable de jugadores (típicamente entre 2 y 4). El smart pointer `dado` y el vector `casillas` representan los componentes fundamentales del juego, gestionando automáticamente su ciclo de vida. El `jugadorActual` mantiene un seguimiento del turno actual, mientras que `finDelJuego` controla el estado de terminación del juego. El entero `meta` define la longitud del tablero y el punto de victoria, `especialesAleatorios` habilita la generación de casillas especiales aleatoria, y `posicionPozo` señala la casilla del pozo si existe.
 
 La implementación de esta clase demuestra un buen uso de la composición, ya que `Juego` no hereda de otras clases sino que utiliza instancias de `Jugador`, `Dado` y casillas para construir su funcionalidad. Esto facilita la reutilización de componentes y hace que el código sea más modular y fácil de probar.
 
@@ -43,24 +43,24 @@ Esta implementación demuestra una buena aplicación de encapsulación, ya que t
 #### 3.3 Clase Casilla (Abstracta)
 La clase `Casilla` representa el ejemplo más claro de abstracción en el proyecto, definiendo una interfaz común que todas las casillas especiales deben implementar. Al ser una clase abstracta, no se pueden crear instancias directas de `Casilla`, pero proporciona el contrato que todas las subclases deben cumplir.
 
-Esta clase define dos métodos virtuales fundamentales que encapsulan el comportamiento esencial de cualquier casilla. El método `accionJugador(Jugador&)` permite la polimórfia, ya que cada subclase implementa su propia lógica específica para afectar al jugador que cae en esa casilla. El método `getDescripcion()` proporciona información textual sobre el efecto de la casilla, ademas de permitir la polimórfia en este mismo.
+Esta clase define dos métodos virtuales fundamentales que encapsulan el comportamiento esencial de cualquier casilla. El método `accionJugador(Jugador&)` permite la polimórfia, ya que cada subclase implementa su propia lógica específica para afectar al jugador que cae en esa casilla. El método `getDescripcion()` proporciona información textual sobre el efecto de la casilla, además de permitir la polimórfia en este mismo. Varias casillas aceptan parámetros dinámicos (por ejemplo, `CasillaOca(numero, destino)`, `CasillaPuente(numero, destino)`, `CasillaPosada(numero, turnos)`, etc.), lo que facilita adaptar el tablero a diferentes longitudes y reglas.
 
 La elección de hacer `accionJugador()` virtual puro (abstracto) fuerza a todas las subclases a implementar este comportamiento, garantizando que no se pueda crear una casilla sin definir su efecto. Esto previene errores de diseño y asegura que el sistema sea completo y coherente.
 
 #### 3.4 Subclases de Casilla
 Las subclases de `Casilla` implementan la variedad de efectos especiales que hacen del Juego de la Oca una experiencia dinámica e impredecible. Cada subclase hereda de la clase base y proporciona una implementación única del método `accionJugador()`, demostrando el poder del polimorfismo en la práctica.
 
-La `CasillaOca` implementa uno de los efectos más característicos del juego. Cuando un jugador cae en una oca, no solo salta automáticamente a la siguiente casilla de oca, sino que también recibe un turno extra. Esta implementación requiere conocimiento de la estructura del tablero para calcular la siguiente posición de oca, demostrando cómo las subclases pueden acceder a información del contexto del juego.
+La `CasillaOca` implementa uno de los efectos más característicos del juego. Cuando un jugador cae en una oca, salta automáticamente a la siguiente oca, y la última oca salta a la meta. El turno extra es gestionado por `Juego` al detectar la casilla "Oca".
 
-La `CasillaPuente` proporciona un efecto de transporte directo, moviendo al jugador a una posición específica (casilla 12) sin pasar por las casillas intermedias. Este tipo de efecto es común en juegos de mesa y demuestra cómo el polimorfismo permite implementar comportamientos complejos de manera simple y elegante.
+La `CasillaPuente` proporciona un efecto de transporte directo, moviendo al jugador a una posición destino configurable, sin pasar por las casillas intermedias.
 
-Las casillas de penalización como `CasillaPosada` y `CasillaCarcel` implementan el mecanismo de pérdida de turnos, afectando la capacidad del jugador para participar en futuras rondas. La diferencia en la duración de la penalización (1 vs 2 turnos) se maneja simplemente pasando diferentes valores al método `perderTurnos()` del jugador.
+Las casillas de penalización como `CasillaPosada` y `CasillaCarcel` implementan el mecanismo de pérdida de turnos, afectando la capacidad del jugador para participar en futuras rondas. La duración de la penalización es configurable.
 
 La `CasillaPozo` implementa uno de los efectos más complejos del juego, ya que requiere coordinación entre múltiples jugadores. Cuando un jugador cae en el pozo, queda atrapado hasta que otro jugador caiga en la misma casilla. Esta implementación demuestra cómo las subclases pueden modificar el estado de otros objetos en el sistema.
 
-La `CasillaLaberinto` y `CasillaCalavera` implementan efectos de retroceso, moviendo al jugador a posiciones anteriores en el tablero. Estos efectos añaden un elemento de frustración y estrategia al juego, ya que pueden hacer que un jugador que estaba cerca de la meta tenga que volver a empezar.
+La `CasillaLaberinto` y `CasillaCalavera` implementan efectos de retroceso, moviendo al jugador a posiciones anteriores en el tablero (destino configurable). Estos efectos añaden un elemento de frustración y estrategia al juego, ya que pueden hacer que un jugador que estaba cerca de la meta tenga que volver a empezar.
 
-Finalmente, la `CasillaJardin` representa la meta del juego, verificando si el jugador ha llegado exactamente a la posición 63 para determinar si ha ganado. Esta casilla no aplica efectos especiales al jugador, sino que actúa como un punto de verificación para el estado del juego.
+Finalmente, la `CasillaJardin` representa la meta del juego (posición `meta` configurable). Esta casilla no aplica efectos especiales al jugador, sino que actúa como un punto de verificación para el estado del juego.
 
 ### 4. Patrones de Diseño
 
@@ -69,8 +69,8 @@ El patrón Strategy se implementa de manera natural a través del sistema de her
 Esta implementación del Strategy Pattern es particularmente elegante porque elimina la necesidad de usar declaraciones condicionales complejas. En lugar de tener un método largo con múltiples `if-else` para determinar qué hacer según el tipo de casilla, cada casilla encapsula su propia lógica. Esto hace que el código sea más mantenible y extensible, ya que agregar un nuevo tipo de casilla solo requiere crear una nueva subclase sin modificar el código existente.
 
 
-#### 4.2 Patron Observador (simplificado)
-El Patron observador se implementa de manera simplificada en el mecanismo del pozo. Cuando un jugador cae en el pozo, todos los otros jugadores que estaban atrapados son notificados y liberados automáticamente. Aunque no se usa una implementación formal del patrón Observer con interfaces y listas de observadores, la funcionalidad es equivalente.
+#### 4.2 Patrón Observador (simplificado)
+El Patrón observador se implementa de manera simplificada en el mecanismo del pozo. Cuando un jugador cae en el pozo, todos los otros jugadores que estaban atrapados son notificados y liberados automáticamente. Aunque no se usa una implementación formal del patrón Observer con interfaces y listas de observadores, la funcionalidad es equivalente.
 
 Esta implementación simplificada es apropiada para este contexto porque la relación de observación es simple y directa: solo hay un tipo de evento (alguien cae en el pozo) y una acción correspondiente (liberar a todos los jugadores atrapados). En un sistema más complejo, se podría implementar un sistema de eventos más sofisticado, pero para este proyecto la implementación actual es suficiente y mantiene el código simple y comprensible.
 
@@ -94,16 +94,15 @@ Finalmente, el proyecto utiliza `std::string` en lugar de C-style strings, aprov
 
 ### 7. Interfaz de Usuario
 
-#### 7.1 Interfaz Gráfica con SFML
-Se eligió SFML sobre QT debido a la facilidad de implementación que tiene, esta mas orientado a videojuegos que QT y permite las entradas de audio, teclado y ratón lo cual puede ser util para futuras implementaciones. Por ultimo SFML es mucho más simple y directo.
+#### 7.1 Interfaz Gráfica con Qt
+La interfaz gráfica del juego está implementada con Qt en `qt/MainWindow.{h,cpp}`. Se utiliza `QGraphicsView/QGraphicsScene` para dibujar el tablero, casillas, fichas y etiquetas, junto con controles (`QPushButton`, `QLabel`, `QListWidget`) para el flujo del juego.
 
-La interfaz gráfica del juego está implementada usando la biblioteca SFML (Simple and Fast Multimedia Library). La interfaz presenta el tablero de juego de manera visual, con representaciones gráficas de las casillas, jugadores y elementos del juego.
+El diálogo de configuración (`showConfigDialog()`) permite:
+- Elegir cantidad de jugadores (2–4) y sus nombres.
+- Seleccionar el tamaño del tablero (meta) entre 63 y 90 casillas.
+- Activar la generación aleatoria de casillas especiales.
 
-La clase `JuegoGUI` actúa como el controlador principal de la interfaz, manejando la renderización, eventos de usuario y la comunicación con la lógica del juego. Esta separación entre la lógica del juego y la interfaz gráfica sigue el patrón Model-View-Controller (MVC), facilitando el mantenimiento y la extensión del código.
-
-La interfaz incluye elementos visuales como tokens de jugadores, representación gráfica del tablero, botones interactivos y un historial de acciones. Los jugadores pueden ver claramente su posición en el tablero, el estado del juego y las acciones disponibles, haciendo que la experiencia sea más inmersiva y fácil de seguir.
-
-Los indicadores visuales, como los tokens de colores para cada jugador y las etiquetas de posición, proporcionan información contextual de manera inmediata y clara. La confirmación de acciones importantes, como el lanzamiento del dado o el movimiento a una nueva casilla, se muestra visualmente, ayudando al usuario a mantener el control sobre el juego y entender las consecuencias de sus acciones.
+La GUI consulta a `Juego` para obtener nombres de casilla (`obtenerNombreCasilla`) y así colorear/etiquetar cada casilla coherentemente, incluso cuando las casillas especiales se generan al azar. El tablero se dibuja dinámicamente de 0..meta y se reconstruye al iniciar o reiniciar.
 
 ### 8. Extensibilidad
 
@@ -120,4 +119,4 @@ La clase `Jugador` también está preparada para extensiones, con métodos que p
 #### 8.3 Interfaz Gráfica
 La separación entre la lógica del juego y la interfaz de usuario es una característica importante del diseño. Las clases del modelo (Juego, Jugador, Casilla, etc.) son completamente independientes de la interfaz gráfica, lo que permite modificar o extender la interfaz sin afectar la lógica del juego.
 
-Esta separación se demuestra en la implementación de la interfaz gráfica con SFML, que utiliza las mismas clases del modelo. La clase `JuegoGUI` actúa como una capa de presentación que se comunica con la lógica del juego a través de una interfaz bien definida, demostrando la robustez del diseño arquitectónico y la aplicabilidad del patrón MVC.
+Esta separación se demuestra con Qt: `MainWindow` (vista/controlador) se comunica con `Juego` (modelo) a través de una interfaz bien definida, demostrando la robustez del diseño arquitectónico y la aplicabilidad del patrón MVC.
