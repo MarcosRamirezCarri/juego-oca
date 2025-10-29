@@ -43,12 +43,14 @@ private:
     void buildBoard();
     QPointF cellPos(int cellIndex) const; // 0..meta
     void syncPlayers();
-    void initGame(const std::vector<std::string>& nombres, int meta, bool especialesAleatorios);
+    void initGame(const std::vector<std::string>& nombres, int meta, bool especialesAleatorios, int cantidadDados);
     void showConfigDialog();
 
     // Config actual
     int boardMeta_ = 63;
     bool randomSpecials_ = false;
+    int diceCount_ = 1;
+    std::vector<std::string> lastPlayerNames_ = {"Jugador 1", "Jugador 2"};
 };
 
 #endif // MAINWINDOW_H

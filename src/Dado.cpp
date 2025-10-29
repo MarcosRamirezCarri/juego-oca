@@ -1,11 +1,14 @@
 #include "Dado.h"
 #include <cstdlib>
-#include <ctime>
 
-Dado::Dado(int caras) : carasDelDado(caras) {
+Dado::Dado(int caras, int cantidad) : carasDelDado(caras), cantidadDados(cantidad) {
     // El constructor ya está implementado con la lista de inicialización
 }
 
 int Dado::lanzar() {
-    return (rand() % carasDelDado) + 1;
+    int total = 0;
+    for (int i = 0; i < cantidadDados; ++i) {
+        total += (std::rand() % carasDelDado) + 1;
+    }
+    return total;
 } 

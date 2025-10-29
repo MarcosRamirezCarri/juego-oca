@@ -27,9 +27,9 @@ La composición se implementa usando smart pointers (`std::unique_ptr`) para ges
 ### 3. Análisis de Clases
 
 #### 3.1 Clase Juego
-La clase `Juego` actúa como el orquestador principal del sistema, coordinando todas las interacciones entre los diferentes componentes. Su responsabilidad principal es controlar el flujo del juego, gestionando los turnos de los jugadores, aplicando las reglas del juego y verificando las condiciones de victoria. Ahora soporta una meta dinámica (63–90) y una generación opcional de casillas especiales al azar.
+La clase `Juego` actúa como el orquestador principal del sistema, coordinando todas las interacciones entre los diferentes componentes. Su responsabilidad principal es controlar el flujo del juego, gestionando los turnos de los jugadores, aplicando las reglas del juego y verificando las condiciones de victoria. Ahora soporta una meta dinámica (63–90), la generación opcional de casillas especiales al azar y la elección entre uno o dos dados.
 
-Esta clase mantiene el estado global del juego a través de varios atributos clave. El vector `jugadores` almacena todas las instancias de jugadores participantes, permitiendo un número variable de jugadores (típicamente entre 2 y 4). El smart pointer `dado` y el vector `casillas` representan los componentes fundamentales del juego, gestionando automáticamente su ciclo de vida. El `jugadorActual` mantiene un seguimiento del turno actual, mientras que `finDelJuego` controla el estado de terminación del juego. El entero `meta` define la longitud del tablero y el punto de victoria, `especialesAleatorios` habilita la generación de casillas especiales aleatoria, y `posicionPozo` señala la casilla del pozo si existe.
+Esta clase mantiene el estado global del juego a través de varios atributos clave. El vector `jugadores` almacena todas las instancias de jugadores participantes, permitiendo un número variable de jugadores (entre 2 y 4). El smart pointer `dado` y el vector `casillas` representan los componentes fundamentales del juego, gestionando automáticamente su ciclo de vida. El `jugadorActual` mantiene un seguimiento del turno actual, mientras que `finDelJuego` controla el estado de terminación del juego. El entero `meta` define la longitud del tablero y el punto de victoria, `especialesAleatorios` habilita la generación de casillas especiales aleatoria, `posicionPozo` señala la casilla del pozo si existe, y `cantidadDados` almacena si la partida se está jugando con uno o dos dados.
 
 La implementación de esta clase demuestra un buen uso de la composición, ya que `Juego` no hereda de otras clases sino que utiliza instancias de `Jugador`, `Dado` y casillas para construir su funcionalidad. Esto facilita la reutilización de componentes y hace que el código sea más modular y fácil de probar.
 
@@ -101,8 +101,13 @@ El diálogo de configuración (`showConfigDialog()`) permite:
 - Elegir cantidad de jugadores (2–4) y sus nombres.
 - Seleccionar el tamaño del tablero (meta) entre 63 y 90 casillas.
 - Activar la generación aleatoria de casillas especiales.
+- Elegir si la partida se juega con un dado o con dos dados (actualiza etiquetas y sumatoria de tiradas).
+- Guardar la configuración actual en un archivo de texto (`.txt`) y volver a cargarla más adelante. La persistencia utiliza un formato simple `clave=valor`, lo que facilita inspeccionar o versionar presets sin herramientas adicionales.
 
 La GUI consulta a `Juego` para obtener nombres de casilla (`obtenerNombreCasilla`) y así colorear/etiquetar cada casilla coherentemente, incluso cuando las casillas especiales se generan al azar. El tablero se dibuja dinámicamente de 0..meta y se reconstruye al iniciar o reiniciar.
+
+#### 7.2 Desafío principal: persistencia de configuraciones
+Integrar el guardado y la carga de parámetros fue el aspecto más desafiante de la interfaz. El reto principal estuvo en mantener la coherencia entre el estado previo al inicio del juego (donde todavía no existe un objeto `Juego`) y el estado posterior a iniciar una partida. Era necesario que el diálogo de configuración pudiera exportar presets válidos aun cuando el juego no estuviera activo, y que, al importarlos, todos los controles (cantidad de jugadores visibles, nombres, meta, dados, casillas especiales) se sincronizaran sin dejar al usuario en estados intermedios inconsistentes. Optamos por concentrar la persistencia dentro del propio diálogo, actualizando los campos interactivos en vivo, para garantizar que cualquier preset cargado se refleje inmediatamente en la UI antes de crear el juego. También se eligió un formato de texto plano porque facilita depuración, control de versiones y edición manual, a la vez que mantiene el código sencillo para fines educativos.
 
 ### 8. Extensibilidad
 

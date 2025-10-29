@@ -7,7 +7,7 @@
 
 using namespace std;
 
-Juego::Juego(const vector<string>& nombresJugadores, int meta, bool especialesAleatorios) 
+Juego::Juego(const vector<string>& nombresJugadores, int meta, bool especialesAleatorios, int cantidadDados) 
     : cantidadJugadores(nombresJugadores.size()), 
       finDelJuego(false), 
       jugadorActual(0), 
@@ -15,7 +15,11 @@ Juego::Juego(const vector<string>& nombresJugadores, int meta, bool especialesAl
       gui(nullptr),
       meta(meta),
       especialesAleatorios(especialesAleatorios),
-      posicionPozo(31) {
+      posicionPozo(31),
+      cantidadDados(cantidadDados) {
+    if (this->cantidadDados < 1) {
+        this->cantidadDados = 1;
+    }
     
     // Crear jugadores
     for (const auto& nombre : nombresJugadores) {
@@ -23,7 +27,7 @@ Juego::Juego(const vector<string>& nombresJugadores, int meta, bool especialesAl
     }
     
     // Crear dado e inicializar casillas
-    dado = make_unique<Dado>();
+    dado = make_unique<Dado>(6, cantidadDados);
     inicializarCasillas();
     
     
@@ -50,12 +54,6 @@ void Juego::iniciarJuego() {
             }
             pasarTurno();
         }
-        
-        // Verificar si el jugador ha ganado
-        if (verificarGanador()) {
-            finDelJuego = true;
-            cout << "\n🎉 ¡" << jugadores[jugadorActual].conseguirNombre() << " HA GANADO! 🎉" << endl;
-        }
     }
 }
 
@@ -73,8 +71,8 @@ void Juego::reiniciarJuego() {
         }
     }
 
-    // Reiniciar el dado
-    dado = make_unique<Dado>();
+    // Reiniciar el dado con la misma cantidad de dados seleccionada
+    dado = make_unique<Dado>(6, cantidadDados);
 
     // Reiniciar las casillas
     inicializarCasillas();
@@ -97,6 +95,13 @@ void Juego::jugarTurno() {
     }
     
     procesarMovimiento(jugadorActual, nuevaPosicion);
+
+    // Verificar ganador inmediatamente después de mover (antes de pasar turno)
+    if (jugadores[jugadorActual].conseguirPosicion() == meta) {
+        finDelJuego = true;
+        cout << "\n🎉 ¡" << jugador.conseguirNombre() << " HA GANADO! 🎉" << endl;
+        return;
+    }
     
     // Verificar si es casilla de oca para turno extra
     Casilla* casilla = obtenerCasilla(nuevaPosicion);
@@ -203,6 +208,7 @@ ResultadoTurno Juego::lanzarDadoYJugarTurno() {
     int resultado = dado->lanzar();
     int posInicial = jugadores[jugadorActual].conseguirPosicion();
     int nuevaPos = posInicial + resultado;
+    int jugadorQueJuega = jugadorActual;
     
     // Rebote si se pasa de la meta
     if (nuevaPos > meta) {
@@ -223,6 +229,13 @@ ResultadoTurno Juego::lanzarDadoYJugarTurno() {
     
     procesarMovimiento(jugadorActual, nuevaPos);
     
+    // Verificar ganador inmediatamente después de mover (antes de pasar turno)
+    if (jugadores[jugadorQueJuega].conseguirPosicion() == meta) {
+        finDelJuego = true;
+        movimiento += "\n🎉 ¡" + jugadores[jugadorQueJuega].conseguirNombre() + " HA GANADO! 🎉";
+        return ResultadoTurno(resultado, movimiento);
+    }
+    
     // Verificar si es casilla de oca para turno extra 
     if (casilla && casilla->getNombre() == "Oca") {
         turnoExtra = true;
@@ -230,12 +243,6 @@ ResultadoTurno Juego::lanzarDadoYJugarTurno() {
     } else {
         turnoExtra = false;
         pasarTurno();
-    }
-    
-    // Verificar ganador
-    if (verificarGanador()) {
-        finDelJuego = true;
-        movimiento += "\n🎉 ¡" + jugadores[jugadorActual].conseguirNombre() + " HA GANADO! 🎉";
     }
     
     return ResultadoTurno(resultado, movimiento);
@@ -288,26 +295,12 @@ void Juego::inicializarCasillas() {
         // Calavera 58 -> 1
         if (58 <= meta) casillas[58] = make_unique<CasillaCalavera>(58, 1);
     } else {
-        // Generación aleatoria de casillas especiales
+        // Generación aleatoria de casillas especiales (versión simple)
         random_device rd;
         mt19937 gen(rd());
-        auto pickUnique = [&](int lo, int hi, int count, unordered_set<int>& used){
-            uniform_int_distribution<> d(lo, hi);
-            vector<int> result;
-            int guard = 0;
-            while ((int)result.size() < count && guard < 10000) {
-                ++guard;
-                int v = d(gen);
-                if (v <= 1 || v >= meta) continue; // evitar inicio/meta
-                if (used.count(v)) continue;
-                used.insert(v);
-                result.push_back(v);
-            }
-            sort(result.begin(), result.end());
-            return result;
-        };
 
         unordered_set<int> usados;
+
         // Ocas: cada 9 (9, 18, 27, ...), última oca salta a meta
         vector<int> posOcas;
         for (int o = 9; o < meta; o += 9) {
@@ -320,49 +313,99 @@ void Juego::inicializarCasillas() {
             casillas[from] = make_unique<CasillaOca>(from, to);
         }
 
-        // Puente: 1 par
-        {
-            uniform_int_distribution<> dStart(2, max(2, meta - 6));
-            int start = dStart(gen);
-            while (usados.count(start)) start = dStart(gen);
+        // Puente: buscamos un inicio libre y luego un destino hacia adelante
+        vector<int> puentesInicio;
+        for (int pos = 2; pos < meta - 1; ++pos) {
+            if (usados.count(pos)) continue;
+            puentesInicio.push_back(pos);
+        }
+        if (!puentesInicio.empty()) {
+            shuffle(puentesInicio.begin(), puentesInicio.end(), gen);
+            int start = puentesInicio.front();
             usados.insert(start);
-            uniform_int_distribution<> dEnd(start + 2, meta - 1);
-            int end = dEnd(gen);
-            while (usados.count(end)) { if (end + 1 < meta) ++end; else break; }
-            casillas[start] = make_unique<CasillaPuente>(start, end);
-        }
 
-        // Posadas: 2 posiciones
-        vector<int> posPosadas = pickUnique(2, meta - 1, 2, usados);
-        for (int p : posPosadas) casillas[p] = make_unique<CasillaPosada>(p, 1);
-
-        // Pozo: 1 posicion
-        {
-            vector<int> v = pickUnique(2, meta - 1, 1, usados);
-            if (!v.empty()) { casillas[v[0]] = make_unique<CasillaPozo>(v[0]); posicionPozo = v[0]; }
-            else { posicionPozo = -1; }
-        }
-
-        // Laberinto: 1 posicion con destino hacia atrás
-        {
-            vector<int> v = pickUnique(5, meta - 1, 1, usados);
-            if (!v.empty()) {
-                int from = v[0];
-                int back = max(1, from - max(5, meta / 5));
-                casillas[from] = make_unique<CasillaLaberinto>(from, back);
+            vector<int> puentesDestino;
+            for (int pos = start + 1; pos < meta; ++pos) {
+                if (pos == start) continue;
+                puentesDestino.push_back(pos);
+            }
+            if (!puentesDestino.empty()) {
+                shuffle(puentesDestino.begin(), puentesDestino.end(), gen);
+                int end = puentesDestino.front();
+                casillas[start] = make_unique<CasillaPuente>(start, end);
             }
         }
 
-        // Carcel: 1 posicion
-        {
-            vector<int> v = pickUnique(2, meta - 1, 1, usados);
-            if (!v.empty()) casillas[v[0]] = make_unique<CasillaCarcel>(v[0], 2);
+        // Posadas: buscamos dos casillas libres
+        vector<int> candidatosPosadas;
+        for (int pos = 2; pos < meta; ++pos) {
+            if (usados.count(pos)) continue;
+            candidatosPosadas.push_back(pos);
+        }
+        shuffle(candidatosPosadas.begin(), candidatosPosadas.end(), gen);
+        int posadasColocadas = 0;
+        for (int pos : candidatosPosadas) {
+            casillas[pos] = make_unique<CasillaPosada>(pos, 1);
+            usados.insert(pos);
+            posadasColocadas++;
+            if (posadasColocadas == 2) break;
         }
 
-        // Calavera: 1 posicion que te manda a 1
-        {
-            vector<int> v = pickUnique(2, meta - 1, 1, usados);
-            if (!v.empty()) casillas[v[0]] = make_unique<CasillaCalavera>(v[0], 1);
+        // Pozo: una casilla libre
+        vector<int> candidatosPozo;
+        for (int pos = 2; pos < meta; ++pos) {
+            if (usados.count(pos)) continue;
+            candidatosPozo.push_back(pos);
+        }
+        shuffle(candidatosPozo.begin(), candidatosPozo.end(), gen);
+        if (!candidatosPozo.empty()) {
+            int pos = candidatosPozo.front();
+            casillas[pos] = make_unique<CasillaPozo>(pos);
+            posicionPozo = pos;
+            usados.insert(pos);
+        } else {
+            posicionPozo = -1;
+        }
+
+        // Laberinto: una casilla desde la que retrocedemos
+        vector<int> candidatosLaberinto;
+        for (int pos = 5; pos < meta; ++pos) {
+            if (usados.count(pos)) continue;
+            candidatosLaberinto.push_back(pos);
+        }
+        shuffle(candidatosLaberinto.begin(), candidatosLaberinto.end(), gen);
+        if (!candidatosLaberinto.empty()) {
+            int pos = candidatosLaberinto.front();
+            usados.insert(pos);
+            int back = pos - 8;
+            if (back < 1) back = 1;
+            casillas[pos] = make_unique<CasillaLaberinto>(pos, back);
+        }
+
+        // Cárcel: una casilla libre
+        vector<int> candidatosCarcel;
+        for (int pos = 2; pos < meta; ++pos) {
+            if (usados.count(pos)) continue;
+            candidatosCarcel.push_back(pos);
+        }
+        shuffle(candidatosCarcel.begin(), candidatosCarcel.end(), gen);
+        if (!candidatosCarcel.empty()) {
+            int pos = candidatosCarcel.front();
+            usados.insert(pos);
+            casillas[pos] = make_unique<CasillaCarcel>(pos, 2);
+        }
+
+        // Calavera: una casilla libre
+        vector<int> candidatosCalavera;
+        for (int pos = 2; pos < meta; ++pos) {
+            if (usados.count(pos)) continue;
+            candidatosCalavera.push_back(pos);
+        }
+        shuffle(candidatosCalavera.begin(), candidatosCalavera.end(), gen);
+        if (!candidatosCalavera.empty()) {
+            int pos = candidatosCalavera.front();
+            casillas[pos] = make_unique<CasillaCalavera>(pos, 1);
+            usados.insert(pos);
         }
     }
 }

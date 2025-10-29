@@ -9,6 +9,12 @@
 #include <QFont>
 #include <QTimer>
 #include <QCheckBox>
+#include <QFileDialog>
+#include <QFile>
+#include <QMessageBox>
+#include <QMap>
+#include <QTextStream>
+#include <algorithm>
 
 static const int ANCHO_VENTANA = 1500;
 static const int ALTO_VENTANA = 900;
@@ -129,18 +135,24 @@ QPointF MainWindow::cellPos(int numeroCasilla) const {
     return QPointF(x, y);
 }
 
-void MainWindow::initGame(const std::vector<std::string>& nombres, int meta, bool especialesAleatorios) {
+void MainWindow::initGame(const std::vector<std::string>& nombres, int meta, bool especialesAleatorios, int cantidadDados) {
     boardMeta_ = meta;
     randomSpecials_ = especialesAleatorios;
-    juego = std::make_unique<Juego>(nombres, meta, especialesAleatorios);
-    // No necesitamos setGUI aquí; la GUI se sincroniza leyendo el estado
+    diceCount_ = cantidadDados;
+    lastPlayerNames_ = nombres;
+    juego = std::make_unique<Juego>(nombres, meta, especialesAleatorios, cantidadDados);
     syncPlayers();
     // Texto de turno inicial
     int actual = juego->obtenerJugadorActual();
     turnLabel->setText(QString::fromStdString("Turno: " + juego->obtenerJugador(actual).conseguirNombre()));
     historyList->clear();
-    diceLabel->setText("Dado: -");
+    if (diceCount_ == 1) {
+        diceLabel->setText("Dado: -");
+    } else {
+        diceLabel->setText(QString("Dados (%1): -").arg(diceCount_));
+    }
     lastRollLabel->setText("Último: -");
+    rollButton->setEnabled(true);
     playersList->clear();
     for (int i = 0; i < juego->obtenerCantidadJugadores(); ++i) {
         const auto& j = juego->obtenerJugador(i);
@@ -191,7 +203,11 @@ void MainWindow::syncPlayers() {
 void MainWindow::onRollDice() {
     if (!juego || !juego->estaJugando()) return;
     const ResultadoTurno res = juego->lanzarDadoYJugarTurno();
-    diceLabel->setText(QString::fromStdString("Dado: " + std::to_string(res.resultadoDado)));
+    if (juego->obtenerCantidadDados() == 1) {
+        diceLabel->setText(QString::fromStdString("Dado: " + std::to_string(res.resultadoDado)));
+    } else {
+        diceLabel->setText(QString::fromStdString("Dados (" + std::to_string(juego->obtenerCantidadDados()) + "): " + std::to_string(res.resultadoDado)));
+    }
     // Último tiro
     int previo = (juego->obtenerJugadorActual() - 1);
     if (previo < 0) previo = juego->obtenerCantidadJugadores() - 1;
@@ -210,13 +226,25 @@ void MainWindow::onRollDice() {
     turnLabel->setText(turno);
 
     syncPlayers();
+
+    // Si el juego ha terminado, deshabilitar el botón y mostrar ganador
+    if (!juego->estaJugando()) {
+        rollButton->setEnabled(false);
+        QString ganador = QString::fromStdString(juego->obtenerJugador(juego->obtenerJugadorActual()).conseguirNombre());
+        turnLabel->setText(QString("Juego finalizado: %1 ha ganado").arg(ganador));
+    }
 }
 
 void MainWindow::onRestart() {
     if (!juego) return;
     juego->reiniciarJuego();
+    diceCount_ = juego->obtenerCantidadDados();
     historyList->clear();
-    diceLabel->setText("Dado: -");
+    if (juego->obtenerCantidadDados() == 1) {
+        diceLabel->setText("Dado: -");
+    } else {
+        diceLabel->setText(QString("Dados (%1): -").arg(juego->obtenerCantidadDados()));
+    }
     lastRollLabel->setText("Último: -");
     rollButton->setEnabled(true);
     int actual = juego->obtenerJugadorActual();
@@ -232,7 +260,6 @@ void MainWindow::showConfigDialog() {
     QLabel* lnum = new QLabel("Cantidad de jugadores (2-4):", &dlg);
     QSpinBox* spin = new QSpinBox(&dlg);
     spin->setRange(2, 4);
-    spin->setValue(2);
     v->addWidget(lnum);
     v->addWidget(spin);
 
@@ -249,6 +276,11 @@ void MainWindow::showConfigDialog() {
     chkAleatorio->setChecked(randomSpecials_);
     v->addWidget(chkAleatorio);
 
+    // Cantidad de dados
+    QCheckBox* chkDosDados = new QCheckBox("Jugar con dos dados", &dlg);
+    chkDosDados->setChecked(diceCount_ == 2);
+    v->addWidget(chkDosDados);
+
     // Contenedores de nombres
     std::vector<QLineEdit*> edits;
     for (int i = 0; i < 4; ++i) {
@@ -256,11 +288,116 @@ void MainWindow::showConfigDialog() {
         e->setPlaceholderText(QString("Jugador %1").arg(i + 1));
         edits.push_back(e);
         v->addWidget(e);
-        if (i >= 2) e->setVisible(false);
     }
 
     QObject::connect(spin, qOverload<int>(&QSpinBox::valueChanged), &dlg, [&](int n){
-        for (int i = 0; i < 4; ++i) edits[i]->setVisible(i < n);
+        for (int i = 0; i < 4; ++i) {
+            edits[i]->setVisible(i < n);
+            if (i < n && edits[i]->text().trimmed().isEmpty()) {
+                edits[i]->setText(QString("Jugador %1").arg(i + 1));
+            }
+        }
+    });
+
+    int initialPlayers = static_cast<int>(std::clamp<std::size_t>(lastPlayerNames_.size(), 2u, 4u));
+    spin->setValue(initialPlayers);
+    for (int i = 0; i < 4; ++i) {
+        if (i < initialPlayers && i < static_cast<int>(lastPlayerNames_.size())) {
+            edits[i]->setText(QString::fromStdString(lastPlayerNames_[i]));
+        } else if (i < initialPlayers) {
+            edits[i]->setText(QString("Jugador %1").arg(i + 1));
+        }
+        edits[i]->setVisible(i < initialPlayers);
+    }
+
+    // Botones para guardar/cargar configuración
+    QHBoxLayout* saveLoadLayout = new QHBoxLayout();
+    QPushButton* btnSave = new QPushButton("Guardar configuración...", &dlg);
+    QPushButton* btnLoad = new QPushButton("Cargar configuración...", &dlg);
+    saveLoadLayout->addWidget(btnSave);
+    saveLoadLayout->addWidget(btnLoad);
+    v->addLayout(saveLoadLayout);
+
+    QObject::connect(btnSave, &QPushButton::clicked, &dlg, [&](){
+        QString fileName = QFileDialog::getSaveFileName(&dlg, "Guardar configuración", QString(), "Archivos de texto (*.txt);;Todos los archivos (*.*)");
+        if (fileName.isEmpty()) return;
+
+        QFile file(fileName);
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            QMessageBox::warning(&dlg, "Error", "No se pudo guardar la configuración.");
+            return;
+        }
+
+        QTextStream out(&file);
+        out << "meta=" << spinMeta->value() << '\n';
+        out << "randomSpecials=" << (chkAleatorio->isChecked() ? 1 : 0) << '\n';
+        out << "diceCount=" << (chkDosDados->isChecked() ? 2 : 1) << '\n';
+        QStringList nombres;
+        for (int i = 0; i < spin->value(); ++i) {
+            QString nombre = edits[i]->text().trimmed();
+            if (nombre.isEmpty()) nombre = QString("Jugador %1").arg(i + 1);
+            nombres << nombre;
+        }
+        out << "players=" << nombres.join(';') << '\n';
+        file.close();
+    });
+
+    QObject::connect(btnLoad, &QPushButton::clicked, &dlg, [&](){
+        QString fileName = QFileDialog::getOpenFileName(&dlg, "Cargar configuración", QString(), "Archivos de texto (*.txt);;Todos los archivos (*.*)");
+        if (fileName.isEmpty()) return;
+
+        QFile file(fileName);
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            QMessageBox::warning(&dlg, "Error", "No se pudo abrir el archivo de configuración.");
+            return;
+        }
+
+        QTextStream in(&file);
+        QMap<QString, QString> values;
+        while (!in.atEnd()) {
+            const QString line = in.readLine().trimmed();
+            if (line.isEmpty() || line.startsWith('#')) continue;
+            const int idx = line.indexOf('=');
+            if (idx < 0) continue;
+            QString key = line.left(idx).trimmed();
+            QString value = line.mid(idx + 1).trimmed();
+            values.insert(key, value);
+        }
+        file.close();
+
+        bool ok = false;
+        int metaVal = values.value("meta", QString::number(boardMeta_)).toInt(&ok);
+        if (ok) {
+            metaVal = std::clamp(metaVal, 63, 90);
+            spinMeta->setValue(metaVal);
+        }
+
+        int randVal = values.value("randomSpecials", QString::number(randomSpecials_ ? 1 : 0)).toInt(&ok);
+        if (ok) chkAleatorio->setChecked(randVal != 0);
+
+        int diceVal = values.value("diceCount", QString::number(diceCount_)).toInt(&ok);
+        if (ok) chkDosDados->setChecked(diceVal >= 2);
+
+        QString playersLine = values.value("players");
+        QStringList rawNames = playersLine.split(';', Qt::SkipEmptyParts);
+        if (rawNames.size() < 2) {
+            rawNames.clear();
+            rawNames << "Jugador 1" << "Jugador 2";
+        }
+        if (rawNames.size() > 4) rawNames = rawNames.mid(0, 4);
+
+        int newCount = rawNames.size();
+        spin->setValue(newCount);
+        for (int i = 0; i < 4; ++i) {
+            if (i < rawNames.size()) {
+                edits[i]->setText(rawNames[i].trimmed());
+            } else if (i < newCount) {
+                edits[i]->setText(QString("Jugador %1").arg(i + 1));
+            } else {
+                edits[i]->clear();
+            }
+            edits[i]->setVisible(i < newCount);
+        }
     });
 
     QHBoxLayout* h = new QHBoxLayout();
@@ -282,10 +419,11 @@ void MainWindow::showConfigDialog() {
         }
         int meta = spinMeta->value();
         bool ale = chkAleatorio->isChecked();
-        initGame(nombres, meta, ale);
-    } else {
-        // fallback por si cancelan: 2 por defecto
-        initGame({"Jugador 1", "Jugador 2"}, boardMeta_, randomSpecials_);
+        int dados = chkDosDados->isChecked() ? 2 : 1;
+        initGame(nombres, meta, ale, dados);
+    } else if (!juego) {
+        // fallback inicial si todavía no se ha creado un juego
+        initGame(lastPlayerNames_, boardMeta_, randomSpecials_, diceCount_);
     }
 }
 

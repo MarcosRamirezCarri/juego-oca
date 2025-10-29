@@ -4,9 +4,10 @@
 class Dado {
 private:
     int carasDelDado;
+    int cantidadDados;
 
 public:
-    Dado(int caras = 6);
+    Dado(int caras = 6, int cantidad = 1);
     int lanzar();
 };
 
