@@ -33,6 +33,7 @@ private:
     bool especialesAleatorios;
     int posicionPozo;
     int cantidadDados;
+    uint32_t semillaAleatoria; // para reproducir el tablero aleatorio
     
     // Métodos privados para manejar el tablero
     void inicializarCasillas();
@@ -57,6 +58,8 @@ public:
     bool estaJugando() const;
     int obtenerMeta() const { return meta; }
     int obtenerCantidadDados() const { return cantidadDados; }
+    bool obtenerEspecialesAleatorios() const { return especialesAleatorios; }
+    uint32_t obtenerSemillaAleatoria() const { return semillaAleatoria; }
     string obtenerNombreCasilla(int numero) const;
     
     //Metodo para reiniciar el juego
@@ -67,6 +70,10 @@ public:
     
     // Método para conectar con la interfaz gráfica
     void setGUI(JuegoGUI* interfaz);
+
+    // Persistencia binaria de la partida (incluye historial)
+    bool guardarPartida(const std::string& rutaArchivo, const std::vector<std::string>& historial) const;
+    static std::unique_ptr<Juego> cargarPartida(const std::string& rutaArchivo, std::vector<std::string>& historialOut);
 
 };
 

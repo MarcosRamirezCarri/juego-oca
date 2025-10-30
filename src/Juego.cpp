@@ -1,4 +1,5 @@
 #include "Juego.h"
+#include <fstream>
 #include <iostream>
 #include <limits>
 #include <algorithm>
@@ -16,7 +17,8 @@ Juego::Juego(const vector<string>& nombresJugadores, int meta, bool especialesAl
       meta(meta),
       especialesAleatorios(especialesAleatorios),
       posicionPozo(31),
-      cantidadDados(cantidadDados) {
+      cantidadDados(cantidadDados),
+      semillaAleatoria(0) {
     if (this->cantidadDados < 1) {
         this->cantidadDados = 1;
     }
@@ -28,6 +30,10 @@ Juego::Juego(const vector<string>& nombresJugadores, int meta, bool especialesAl
     
     // Crear dado e inicializar casillas
     dado = make_unique<Dado>(6, cantidadDados);
+    if (especialesAleatorios) {
+        std::random_device rd;
+        semillaAleatoria = rd();
+    }
     inicializarCasillas();
     
     
@@ -295,9 +301,8 @@ void Juego::inicializarCasillas() {
         // Calavera 58 -> 1
         if (58 <= meta) casillas[58] = make_unique<CasillaCalavera>(58, 1);
     } else {
-        // Generación aleatoria de casillas especiales (versión simple)
-        random_device rd;
-        mt19937 gen(rd());
+        // Generación aleatoria de casillas especiales (versión simple) con semilla reproducible
+        mt19937 gen(semillaAleatoria);
 
         unordered_set<int> usados;
 
@@ -423,4 +428,155 @@ string Juego::obtenerNombreCasilla(int numero) const {
         return c ? c->getNombre() : string("");
     }
     return "";
+}
+
+// --- Persistencia binaria ---
+namespace {
+    enum class TipoCasilla : uint8_t {
+        Normal = 0,
+        Oca = 1,
+        Puente = 2,
+        Posada = 3,
+        Laberinto = 4,
+        Carcel = 5,
+        Calavera = 6,
+        Jardin = 7
+    };
+
+    static void escribirString(ofstream& out, const string& s) {
+        uint32_t len = static_cast<uint32_t>(s.size());
+        out.write(reinterpret_cast<const char*>(&len), sizeof(len));
+        if (len) out.write(s.data(), len);
+    }
+
+    static bool leerString(ifstream& in, string& s) {
+        uint32_t len = 0;
+        if (!in.read(reinterpret_cast<char*>(&len), sizeof(len))) return false;
+        s.resize(len);
+        if (len) if (!in.read(&s[0], len)) return false;
+        return true;
+    }
+}
+
+bool Juego::guardarPartida(const std::string& rutaArchivo, const std::vector<std::string>& historial) const {
+    ofstream out(rutaArchivo, ios::binary);
+    if (!out) return false;
+
+    const char magic[4] = {'O','C','A','1'};
+    out.write(magic, 4);
+
+    // Datos generales
+    out.write(reinterpret_cast<const char*>(&meta), sizeof(meta));
+    out.write(reinterpret_cast<const char*>(&especialesAleatorios), sizeof(especialesAleatorios));
+    out.write(reinterpret_cast<const char*>(&cantidadDados), sizeof(cantidadDados));
+    out.write(reinterpret_cast<const char*>(&posicionPozo), sizeof(posicionPozo));
+    out.write(reinterpret_cast<const char*>(&semillaAleatoria), sizeof(semillaAleatoria));
+    out.write(reinterpret_cast<const char*>(&cantidadJugadores), sizeof(cantidadJugadores));
+    out.write(reinterpret_cast<const char*>(&jugadorActual), sizeof(jugadorActual));
+    out.write(reinterpret_cast<const char*>(&finDelJuego), sizeof(finDelJuego));
+    out.write(reinterpret_cast<const char*>(&turnoExtra), sizeof(turnoExtra));
+
+    // Jugadores
+    for (const auto& j : jugadores) {
+        escribirString(out, j.conseguirNombre());
+        int pos = j.conseguirPosicion();
+        int tp = j.getTurnosPerdidos();
+        bool enPozo = j.estaEnPozo();
+        out.write(reinterpret_cast<const char*>(&pos), sizeof(pos));
+        out.write(reinterpret_cast<const char*>(&tp), sizeof(tp));
+        out.write(reinterpret_cast<const char*>(&enPozo), sizeof(enPozo));
+    }
+
+    // Con semilla es suficiente para reproducir el tablero aleatorio; no serializamos casillas individuales
+
+    // Historial
+    uint32_t hcount = static_cast<uint32_t>(historial.size());
+    out.write(reinterpret_cast<const char*>(&hcount), sizeof(hcount));
+    for (const auto& line : historial) escribirString(out, line);
+
+    return true;
+}
+
+std::unique_ptr<Juego> Juego::cargarPartida(const std::string& rutaArchivo, std::vector<std::string>& historialOut) {
+    ifstream in(rutaArchivo, ios::binary);
+    if (!in) return nullptr;
+
+    char magic[4];
+    if (!in.read(magic, 4)) return nullptr;
+    if (!(magic[0]=='O' && magic[1]=='C' && magic[2]=='A' && magic[3]=='1')) return nullptr;
+
+    int metaV = 63;
+    bool especialesV = false;
+    int dadosV = 1;
+    int posPozoV = -1;
+    uint32_t semillaV = 0;
+    int cantJugV = 0;
+    int jugadorActV = 0;
+    bool finV = false;
+    bool turnoExtraV = false;
+
+    in.read(reinterpret_cast<char*>(&metaV), sizeof(metaV));
+    in.read(reinterpret_cast<char*>(&especialesV), sizeof(especialesV));
+    in.read(reinterpret_cast<char*>(&dadosV), sizeof(dadosV));
+    in.read(reinterpret_cast<char*>(&posPozoV), sizeof(posPozoV));
+    in.read(reinterpret_cast<char*>(&semillaV), sizeof(semillaV));
+    in.read(reinterpret_cast<char*>(&cantJugV), sizeof(cantJugV));
+    in.read(reinterpret_cast<char*>(&jugadorActV), sizeof(jugadorActV));
+    in.read(reinterpret_cast<char*>(&finV), sizeof(finV));
+    in.read(reinterpret_cast<char*>(&turnoExtraV), sizeof(turnoExtraV));
+
+    vector<string> nombres;
+    vector<int> pos;
+    vector<int> turnos;
+    vector<bool> enPozo;
+    nombres.reserve(cantJugV);
+    pos.reserve(cantJugV);
+    turnos.reserve(cantJugV);
+    enPozo.reserve(cantJugV);
+
+    for (int i = 0; i < cantJugV; ++i) {
+        string nom;
+        if (!leerString(in, nom)) return nullptr;
+        nombres.push_back(nom);
+        int p=0, t=0; bool ep=false;
+        in.read(reinterpret_cast<char*>(&p), sizeof(p));
+        in.read(reinterpret_cast<char*>(&t), sizeof(t));
+        in.read(reinterpret_cast<char*>(&ep), sizeof(ep));
+        pos.push_back(p);
+        turnos.push_back(t);
+        enPozo.push_back(ep);
+    }
+
+    // Historial
+    uint32_t hcount = 0;
+    if (!in.read(reinterpret_cast<char*>(&hcount), sizeof(hcount))) return nullptr;
+    historialOut.clear();
+    for (uint32_t i = 0; i < hcount; ++i) {
+        string line;
+        if (!leerString(in, line)) return nullptr;
+        historialOut.push_back(line);
+    }
+
+    // Construcción del juego y rehidratación
+    auto juegoPtr = std::make_unique<Juego>(nombres, metaV, especialesV, dadosV);
+    juegoPtr->semillaAleatoria = semillaV;
+    juegoPtr->inicializarCasillas();
+    juegoPtr->posicionPozo = posPozoV;
+    juegoPtr->jugadorActual = jugadorActV;
+    juegoPtr->finDelJuego = finV;
+    juegoPtr->turnoExtra = turnoExtraV;
+
+    // Jugadores
+    for (size_t i = 0; i < nombres.size(); ++i) {
+        juegoPtr->jugadores[i].moverJugador(pos[i]);
+        int delta = turnos[i] - juegoPtr->jugadores[i].getTurnosPerdidos();
+        if (delta != 0) juegoPtr->jugadores[i].perderTurnos(delta);
+        if (enPozo[i]) juegoPtr->jugadores[i].entrarPozo(); else juegoPtr->jugadores[i].salirPozo();
+    }
+
+    // Casillas: si especialesAleatorios == false, recrear según reglas estándar; si true, mantenemos las existentes.
+    // Debido a no tener parámetros detallados, confiamos en la lógica existente para un tablero consistente.
+    // Ya se creó con inicializarCasillas(); no cambiamos.
+
+    return juegoPtr;
 }

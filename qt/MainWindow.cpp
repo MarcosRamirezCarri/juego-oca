@@ -14,27 +14,31 @@
 #include <QMessageBox>
 #include <QMap>
 #include <QTextStream>
+#include <QDir>
+#include <QDateTime>
 #include <algorithm>
 
 static const int ANCHO_VENTANA = 1500;
 static const int ALTO_VENTANA = 900;
-static const int TAMANO_CASILLA = 78;
+static const int TAMANO_CASILLA = 88;
 static const int MARGEN = 50;
 static const int ESPACIADO_CASILLAS = 6;
 static const int FILAS_TABLERO = 10;
 static const int COLUMNAS_TABLERO = 9;
 
-MainWindow::MainWindow(QWidget* parent)
+VentanaPrincipal::VentanaPrincipal(QWidget* parent)
     : QMainWindow(parent),
-      boardView(new QGraphicsView(this)),
-      boardScene(new QGraphicsScene(this)),
-      rollButton(new QPushButton("LANZAR DADO", this)),
-      restartButton(new QPushButton("REINICIAR JUEGO", this)),
-      turnLabel(new QLabel("Turno: Esperando inicio del juego", this)),
-      diceLabel(new QLabel("Dado: -", this)),
-      lastRollLabel(new QLabel("Último: -", this)),
-      historyList(new QListWidget(this)),
-      playersList(new QListWidget(this)) {
+      vistaTablero(new QGraphicsView(this)),
+      escenaTablero(new QGraphicsScene(this)),
+      botonLanzar(new QPushButton("LANZAR DADO", this)),
+      botonReiniciar(new QPushButton("REINICIAR JUEGO", this)),
+      botonGuardarPartida(new QPushButton("GUARDAR PARTIDA...", this)),
+      botonCargarPartida(new QPushButton("CARGAR PARTIDA...", this)),
+      etiquetaTurno(new QLabel("Turno: Esperando inicio del juego", this)),
+      etiquetaDado(new QLabel("Dado: -", this)),
+      etiquetaUltimoTiro(new QLabel("Último: -", this)),
+      listaHistorial(new QListWidget(this)),
+      listaJugadores(new QListWidget(this)) {
 
     setWindowTitle("Juego de la Oca - Qt");
     resize(ANCHO_VENTANA, ALTO_VENTANA);
@@ -45,45 +49,49 @@ MainWindow::MainWindow(QWidget* parent)
     QHBoxLayout* rootLayout = new QHBoxLayout(central);
 
     // Vista del tablero
-    boardView->setScene(boardScene);
-    boardView->setRenderHint(QPainter::Antialiasing);
-    boardView->setMinimumSize(1100, 850);
+    vistaTablero->setScene(escenaTablero);
+    vistaTablero->setRenderHint(QPainter::Antialiasing);
+    vistaTablero->setMinimumSize(1100, 850);
 
     // Panel lateral
     QWidget* sidePanel = new QWidget(this);
     QVBoxLayout* sideLayout = new QVBoxLayout(sidePanel);
     QFont f; f.setPointSize(12);
-    turnLabel->setFont(f);
-    diceLabel->setFont(f);
-    sideLayout->addWidget(turnLabel);
-    sideLayout->addWidget(diceLabel);
-    sideLayout->addWidget(rollButton);
-    sideLayout->addWidget(restartButton);
-    sideLayout->addWidget(lastRollLabel);
+    etiquetaTurno->setFont(f);
+    etiquetaDado->setFont(f);
+    sideLayout->addWidget(etiquetaTurno);
+    sideLayout->addWidget(etiquetaDado);
+    sideLayout->addWidget(botonLanzar);
+    sideLayout->addWidget(botonReiniciar);
+    sideLayout->addWidget(botonGuardarPartida);
+    sideLayout->addWidget(botonCargarPartida);
+    sideLayout->addWidget(etiquetaUltimoTiro);
     sideLayout->addWidget(new QLabel("Jugadores:", this));
-    sideLayout->addWidget(playersList);
+    sideLayout->addWidget(listaJugadores);
     sideLayout->addWidget(new QLabel("Historial:", this));
-    sideLayout->addWidget(historyList, 1);
+    sideLayout->addWidget(listaHistorial, 1);
 
-    rootLayout->addWidget(boardView, 1);
+    rootLayout->addWidget(vistaTablero, 1);
     rootLayout->addWidget(sidePanel);
 
-    connect(rollButton, &QPushButton::clicked, this, &MainWindow::onRollDice);
-    connect(restartButton, &QPushButton::clicked, this, &MainWindow::onRestart);
+    connect(botonLanzar, &QPushButton::clicked, this, &VentanaPrincipal::alLanzarDado);
+    connect(botonReiniciar, &QPushButton::clicked, this, &VentanaPrincipal::alReiniciar);
+    connect(botonGuardarPartida, &QPushButton::clicked, this, &VentanaPrincipal::alGuardarPartida);
+    connect(botonCargarPartida, &QPushButton::clicked, this, &VentanaPrincipal::alCargarPartida);
 
     // Inicializar escena y juego
-    buildBoard();
-    showConfigDialog();
+    construirTablero();
+    mostrarDialogoConfiguracion();
 }
 
-MainWindow::~MainWindow() = default;
+VentanaPrincipal::~VentanaPrincipal() = default;
 
-void MainWindow::buildBoard() {
-    boardScene->clear();
-    const int meta = boardMeta_;
+void VentanaPrincipal::construirTablero() {
+    escenaTablero->clear();
+    const int meta = metaTablero_;
     // Dibujar casillas 0..meta
     for (int i = 0; i <= meta; ++i) {
-        QPointF p = cellPos(i);
+        QPointF p = posicionCasilla(i);
         QRectF r(p.x(), p.y(), TAMANO_CASILLA, TAMANO_CASILLA);
 
         QColor fill(255, 255, 255);
@@ -99,34 +107,25 @@ void MainWindow::buildBoard() {
             else if (n == "Calavera") { fill = QColor(153, 122, 111); name = "CALAVERA"; }
             else if (i == meta) { fill = QColor(49, 255, 0); name = "META"; }
             else if (n == "Oca") { fill = QColor(255, 215, 0); name = "OCA"; }
-        } else {
-            if (i == 6) fill = QColor(255, 120, 0);
-            else if (i == 19) fill = QColor(255, 120, 0);
-            else if (i == 31) fill = QColor(255, 38, 38);
-            else if (i == 42) fill = QColor(69, 128, 252);
-            else if (i == 56) fill = QColor(69, 69, 69);
-            else if (i == 58) fill = QColor(153, 122, 111);
-            else if (i == meta) fill = QColor(49, 255, 0);
-            else if (i % 9 == 0 && i < meta && i > 0) fill = QColor(255, 215, 0);
         }
 
-        auto* rect = boardScene->addRect(r, QPen(Qt::black, 2), QBrush(fill));
+        auto* rect = escenaTablero->addRect(r, QPen(Qt::black, 2), QBrush(fill));
         // Número
-        auto* tNum = boardScene->addText(QString::number(i));
+        auto* tNum = escenaTablero->addText(QString::number(i));
         tNum->setDefaultTextColor(Qt::black);
         tNum->setPos(p.x() + 2, p.y() + 2);
         // Nombre
         if (!name.isEmpty()) {
-            auto* tName = boardScene->addText(name);
+            auto* tName = escenaTablero->addText(name);
             tName->setDefaultTextColor(Qt::black);
-            tName->setPos(p.x() + 2, p.y() + TAMANO_CASILLA - 18);
+            tName->setPos(p.x() + 2, p.y() + TAMANO_CASILLA - 26);
         }
     }
 }
 
-QPointF MainWindow::cellPos(int numeroCasilla) const {
-    int fila = numeroCasilla / COLUMNAS_TABLERO;
-    int columna = numeroCasilla % COLUMNAS_TABLERO;
+QPointF VentanaPrincipal::posicionCasilla(int indiceCasilla) const {
+    int fila = indiceCasilla / COLUMNAS_TABLERO;
+    int columna = indiceCasilla % COLUMNAS_TABLERO;
     if (fila % 2 == 1) {
         columna = COLUMNAS_TABLERO - 1 - columna;
     }
@@ -135,125 +134,210 @@ QPointF MainWindow::cellPos(int numeroCasilla) const {
     return QPointF(x, y);
 }
 
-void MainWindow::initGame(const std::vector<std::string>& nombres, int meta, bool especialesAleatorios, int cantidadDados) {
-    boardMeta_ = meta;
-    randomSpecials_ = especialesAleatorios;
-    diceCount_ = cantidadDados;
-    lastPlayerNames_ = nombres;
+void VentanaPrincipal::iniciarJuego(const std::vector<std::string>& nombres, int meta, bool especialesAleatorios, int cantidadDados) {
+    metaTablero_ = meta;
+    especialesAleatorios_ = especialesAleatorios;
+    cantidadDados_ = cantidadDados;
+    ultimosNombresJugadores_ = nombres;
     juego = std::make_unique<Juego>(nombres, meta, especialesAleatorios, cantidadDados);
-    syncPlayers();
+    sincronizarJugadores();
     // Texto de turno inicial
     int actual = juego->obtenerJugadorActual();
-    turnLabel->setText(QString::fromStdString("Turno: " + juego->obtenerJugador(actual).conseguirNombre()));
-    historyList->clear();
-    if (diceCount_ == 1) {
-        diceLabel->setText("Dado: -");
+    etiquetaTurno->setText(QString::fromStdString("Turno: " + juego->obtenerJugador(actual).conseguirNombre()));
+    listaHistorial->clear();
+    if (cantidadDados_ == 1) {
+        etiquetaDado->setText("Dado: -");
     } else {
-        diceLabel->setText(QString("Dados (%1): -").arg(diceCount_));
+        etiquetaDado->setText(QString("Dados (%1): -").arg(cantidadDados_));
     }
-    lastRollLabel->setText("Último: -");
-    rollButton->setEnabled(true);
-    playersList->clear();
+    etiquetaUltimoTiro->setText("Último: -");
+    botonLanzar->setEnabled(true);
+    listaJugadores->clear();
     for (int i = 0; i < juego->obtenerCantidadJugadores(); ++i) {
         const auto& j = juego->obtenerJugador(i);
         QString s = QString::fromStdString(j.conseguirNombre()) +
                     QString(" (Casilla %1)").arg(j.conseguirPosicion());
         if (j.estaEnPozo()) s += " - EN POZO";
         if (j.getTurnosPerdidos() > 0) s += QString(" - Pierde %1 turnos").arg(j.getTurnosPerdidos());
-        playersList->addItem(s);
+        listaJugadores->addItem(s);
     }
-    buildBoard();
+    construirTablero();
 }
 
-void MainWindow::syncPlayers() {
+void VentanaPrincipal::sincronizarJugadores() {
     // Eliminar fichas anteriores
     QList<QGraphicsItem*> toRemove;
-    for (auto* item : boardScene->items()) {
+    for (auto* item : escenaTablero->items()) {
         if (item->data(0).toString() == "ficha") {
             toRemove.push_back(item);
         }
     }
-    for (auto* item : toRemove) boardScene->removeItem(item), delete item;
+    for (auto* item : toRemove) escenaTablero->removeItem(item), delete item;
 
     // Dibujar fichas actuales
     const int n = juego->obtenerCantidadJugadores();
     const QColor colors[4] = {Qt::red, Qt::blue, Qt::green, Qt::yellow};
     for (int i = 0; i < n; ++i) {
         int pos = juego->obtenerJugador(i).conseguirPosicion();
-        QPointF p = cellPos(pos);
+        QPointF p = posicionCasilla(pos);
         // separacion para multiples jugadores
         p.rx() += (i % 2) * 10 + 5;
         p.ry() += (i / 2) * 10 + 5;
-        auto* circ = boardScene->addEllipse(QRectF(p.x(), p.y(), 18, 18), QPen(Qt::black), QBrush(colors[i % 4]));
+        auto* circ = escenaTablero->addEllipse(QRectF(p.x(), p.y(), 18, 18), QPen(Qt::black), QBrush(colors[i % 4]));
         circ->setData(0, "ficha");
     }
 
     // Actualizar lista de jugadores y estados
-    playersList->clear();
+    listaJugadores->clear();
     for (int i = 0; i < n; ++i) {
         const auto& j = juego->obtenerJugador(i);
         QString s = QString::fromStdString(j.conseguirNombre()) +
                     QString(" (Casilla %1)").arg(j.conseguirPosicion());
         if (j.estaEnPozo()) s += " - EN POZO";
         if (j.getTurnosPerdidos() > 0) s += QString(" - Pierde %1 turnos").arg(j.getTurnosPerdidos());
-        playersList->addItem(s);
+        listaJugadores->addItem(s);
     }
 }
 
-void MainWindow::onRollDice() {
+void VentanaPrincipal::alLanzarDado() {
     if (!juego || !juego->estaJugando()) return;
     const ResultadoTurno res = juego->lanzarDadoYJugarTurno();
     if (juego->obtenerCantidadDados() == 1) {
-        diceLabel->setText(QString::fromStdString("Dado: " + std::to_string(res.resultadoDado)));
+        etiquetaDado->setText(QString::fromStdString("Dado: " + std::to_string(res.resultadoDado)));
     } else {
-        diceLabel->setText(QString::fromStdString("Dados (" + std::to_string(juego->obtenerCantidadDados()) + "): " + std::to_string(res.resultadoDado)));
+        etiquetaDado->setText(QString::fromStdString("Dados (" + std::to_string(juego->obtenerCantidadDados()) + "): " + std::to_string(res.resultadoDado)));
     }
     // Último tiro
     int previo = (juego->obtenerJugadorActual() - 1);
     if (previo < 0) previo = juego->obtenerCantidadJugadores() - 1;
     QString nombrePrevio = QString::fromStdString(juego->obtenerJugador(previo).conseguirNombre());
-    lastRollLabel->setText(QString("Último: %1 → %2").arg(nombrePrevio).arg(res.resultadoDado));
+    etiquetaUltimoTiro->setText(QString("Último: %1 → %2").arg(nombrePrevio).arg(res.resultadoDado));
     // Agregar al historial (dividir en líneas si hay saltos)
     const QString desc = QString::fromStdString(res.descripcion);
     for (const QString& line : desc.split('\n')) {
-        if (!line.trimmed().isEmpty()) historyList->addItem(line);
+        if (!line.trimmed().isEmpty()) listaHistorial->addItem(line);
     }
     // Actualizar turno
     int actual = juego->obtenerJugadorActual();
     QString turno = QString::fromStdString("Turno: " + juego->obtenerJugador(actual).conseguirNombre());
     if (juego->obtenerJugador(actual).estaEnPozo()) turno += " (EN POZO)";
     if (juego->obtenerJugador(actual).getTurnosPerdidos() > 0) turno += QString(" (Pierde %1 turnos)").arg(juego->obtenerJugador(actual).getTurnosPerdidos());
-    turnLabel->setText(turno);
+    etiquetaTurno->setText(turno);
 
-    syncPlayers();
+    sincronizarJugadores();
 
     // Si el juego ha terminado, deshabilitar el botón y mostrar ganador
     if (!juego->estaJugando()) {
-        rollButton->setEnabled(false);
+        botonLanzar->setEnabled(false);
         QString ganador = QString::fromStdString(juego->obtenerJugador(juego->obtenerJugadorActual()).conseguirNombre());
-        turnLabel->setText(QString("Juego finalizado: %1 ha ganado").arg(ganador));
+        etiquetaTurno->setText(QString("Juego finalizado: %1 ha ganado").arg(ganador));
     }
 }
 
-void MainWindow::onRestart() {
+void VentanaPrincipal::alReiniciar() {
     if (!juego) return;
     juego->reiniciarJuego();
-    diceCount_ = juego->obtenerCantidadDados();
-    historyList->clear();
+    cantidadDados_ = juego->obtenerCantidadDados();
+    listaHistorial->clear();
     if (juego->obtenerCantidadDados() == 1) {
-        diceLabel->setText("Dado: -");
+        etiquetaDado->setText("Dado: -");
     } else {
-        diceLabel->setText(QString("Dados (%1): -").arg(juego->obtenerCantidadDados()));
+        etiquetaDado->setText(QString("Dados (%1): -").arg(juego->obtenerCantidadDados()));
     }
-    lastRollLabel->setText("Último: -");
-    rollButton->setEnabled(true);
+    etiquetaUltimoTiro->setText("Último: -");
+    botonLanzar->setEnabled(true);
     int actual = juego->obtenerJugadorActual();
-    turnLabel->setText(QString::fromStdString("Turno: " + juego->obtenerJugador(actual).conseguirNombre()));
-    syncPlayers();
-    buildBoard();
+    etiquetaTurno->setText(QString::fromStdString("Turno: " + juego->obtenerJugador(actual).conseguirNombre()));
+    sincronizarJugadores();
+    construirTablero();
 }
 
-void MainWindow::showConfigDialog() {
+void VentanaPrincipal::alGuardarPartida() {
+    if (!juego) {
+        QMessageBox::information(this, "Guardar partida", "No hay partida en curso.");
+        return;
+    }
+    // Asegurar carpeta saves/
+    QDir dir(QDir::current());
+    if (!dir.exists("saves")) {
+        dir.mkpath("saves");
+    }
+    const QString sugerido = QString("Partida-%1.oca").arg(QDateTime::currentDateTime().toString("yyyyMMdd-HHmmss"));
+    const QString rutaInicial = dir.filePath(QString("saves/%1").arg(sugerido));
+    QString fileName = QFileDialog::getSaveFileName(this, "Guardar partida", rutaInicial, "Partidas (*.oca);;Todos los archivos (*.*)");
+    if (fileName.isEmpty()) return;
+    if (!fileName.endsWith(".oca")) fileName += ".oca";
+
+    std::vector<std::string> historial;
+    historial.reserve(listaHistorial->count());
+    for (int i = 0; i < listaHistorial->count(); ++i) {
+        historial.push_back(listaHistorial->item(i)->text().toStdString());
+    }
+
+    bool ok = juego->guardarPartida(fileName.toStdString(), historial);
+    if (!ok) {
+        QMessageBox::warning(this, "Error", "No se pudo guardar la partida.");
+    } else {
+        QMessageBox::information(this, "Guardar partida", "Partida guardada correctamente.");
+    }
+}
+
+void VentanaPrincipal::alCargarPartida() {
+    // Abrir desde carpeta saves/ por defecto
+    QDir dir(QDir::current());
+    if (!dir.exists("saves")) {
+        dir.mkpath("saves");
+    }
+    const QString rutaInicial = dir.filePath("saves/");
+    QString fileName = QFileDialog::getOpenFileName(this, "Cargar partida", rutaInicial, "Partidas (*.oca);;Todos los archivos (*.*)");
+    if (fileName.isEmpty()) return;
+
+    std::vector<std::string> historial;
+    std::unique_ptr<Juego> cargado = Juego::cargarPartida(fileName.toStdString(), historial);
+    if (!cargado) {
+        QMessageBox::warning(this, "Error", "No se pudo cargar la partida.");
+        return;
+    }
+
+    // Adoptar juego cargado
+    juego = std::move(cargado);
+    metaTablero_ = juego->obtenerMeta();
+    especialesAleatorios_ = juego->obtenerEspecialesAleatorios();
+    cantidadDados_ = juego->obtenerCantidadDados();
+
+    // Actualizar UI básica
+    listaHistorial->clear();
+    for (const auto& linea : historial) listaHistorial->addItem(QString::fromStdString(linea));
+
+    etiquetaUltimoTiro->setText("Último: -");
+    if (cantidadDados_ == 1) {
+        etiquetaDado->setText("Dado: -");
+    } else {
+        etiquetaDado->setText(QString("Dados (%1): -").arg(cantidadDados_));
+    }
+
+    // Nombres recordados
+    ultimosNombresJugadores_.clear();
+    for (int i = 0; i < juego->obtenerCantidadJugadores(); ++i) {
+        ultimosNombresJugadores_.push_back(juego->obtenerJugador(i).conseguirNombre());
+    }
+
+    // Turno y jugadores
+    int actual = juego->obtenerJugadorActual();
+    QString turno = QString::fromStdString("Turno: " + juego->obtenerJugador(actual).conseguirNombre());
+    if (juego->obtenerJugador(actual).estaEnPozo()) turno += " (EN POZO)";
+    if (juego->obtenerJugador(actual).getTurnosPerdidos() > 0) turno += QString(" (Pierde %1 turnos)").arg(juego->obtenerJugador(actual).getTurnosPerdidos());
+    etiquetaTurno->setText(turno);
+
+    // Redibujar
+    construirTablero();
+    sincronizarJugadores();
+
+    // Habilitar/deshabilitar
+    botonLanzar->setEnabled(juego->estaJugando());
+}
+
+void VentanaPrincipal::mostrarDialogoConfiguracion() {
     QDialog dlg(this);
     dlg.setWindowTitle("Configuración del juego");
     QVBoxLayout* v = new QVBoxLayout(&dlg);
@@ -267,18 +351,18 @@ void MainWindow::showConfigDialog() {
     QLabel* lmeta = new QLabel("Casillas del tablero (63-90):", &dlg);
     QSpinBox* spinMeta = new QSpinBox(&dlg);
     spinMeta->setRange(63, 90);
-    spinMeta->setValue(boardMeta_);
+    spinMeta->setValue(metaTablero_);
     v->addWidget(lmeta);
     v->addWidget(spinMeta);
 
     // Especiales aleatorios
     QCheckBox* chkAleatorio = new QCheckBox("Generar casillas especiales al azar", &dlg);
-    chkAleatorio->setChecked(randomSpecials_);
+    chkAleatorio->setChecked(especialesAleatorios_);
     v->addWidget(chkAleatorio);
 
     // Cantidad de dados
     QCheckBox* chkDosDados = new QCheckBox("Jugar con dos dados", &dlg);
-    chkDosDados->setChecked(diceCount_ == 2);
+    chkDosDados->setChecked(cantidadDados_ == 2);
     v->addWidget(chkDosDados);
 
     // Contenedores de nombres
@@ -299,11 +383,11 @@ void MainWindow::showConfigDialog() {
         }
     });
 
-    int initialPlayers = static_cast<int>(std::clamp<std::size_t>(lastPlayerNames_.size(), 2u, 4u));
+    int initialPlayers = static_cast<int>(std::clamp<std::size_t>(ultimosNombresJugadores_.size(), 2u, 4u));
     spin->setValue(initialPlayers);
     for (int i = 0; i < 4; ++i) {
-        if (i < initialPlayers && i < static_cast<int>(lastPlayerNames_.size())) {
-            edits[i]->setText(QString::fromStdString(lastPlayerNames_[i]));
+        if (i < initialPlayers && i < static_cast<int>(ultimosNombresJugadores_.size())) {
+            edits[i]->setText(QString::fromStdString(ultimosNombresJugadores_[i]));
         } else if (i < initialPlayers) {
             edits[i]->setText(QString("Jugador %1").arg(i + 1));
         }
@@ -366,16 +450,16 @@ void MainWindow::showConfigDialog() {
         file.close();
 
         bool ok = false;
-        int metaVal = values.value("meta", QString::number(boardMeta_)).toInt(&ok);
+        int metaVal = values.value("meta", QString::number(metaTablero_)).toInt(&ok);
         if (ok) {
             metaVal = std::clamp(metaVal, 63, 90);
             spinMeta->setValue(metaVal);
         }
 
-        int randVal = values.value("randomSpecials", QString::number(randomSpecials_ ? 1 : 0)).toInt(&ok);
+        int randVal = values.value("randomSpecials", QString::number(especialesAleatorios_ ? 1 : 0)).toInt(&ok);
         if (ok) chkAleatorio->setChecked(randVal != 0);
 
-        int diceVal = values.value("diceCount", QString::number(diceCount_)).toInt(&ok);
+        int diceVal = values.value("diceCount", QString::number(cantidadDados_)).toInt(&ok);
         if (ok) chkDosDados->setChecked(diceVal >= 2);
 
         QString playersLine = values.value("players");
@@ -420,10 +504,10 @@ void MainWindow::showConfigDialog() {
         int meta = spinMeta->value();
         bool ale = chkAleatorio->isChecked();
         int dados = chkDosDados->isChecked() ? 2 : 1;
-        initGame(nombres, meta, ale, dados);
+        iniciarJuego(nombres, meta, ale, dados);
     } else if (!juego) {
         // fallback inicial si todavía no se ha creado un juego
-        initGame(lastPlayerNames_, boardMeta_, randomSpecials_, diceCount_);
+        iniciarJuego(ultimosNombresJugadores_, metaTablero_, especialesAleatorios_, cantidadDados_);
     }
 }
 

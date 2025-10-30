@@ -33,6 +33,8 @@ Esta clase mantiene el estado global del juego a través de varios atributos cla
 
 La implementación de esta clase demuestra un buen uso de la composición, ya que `Juego` no hereda de otras clases sino que utiliza instancias de `Jugador`, `Dado` y casillas para construir su funcionalidad. Esto facilita la reutilización de componentes y hace que el código sea más modular y fácil de probar.
 
+Adicionalmente, la clase incorpora persistencia binaria de la partida: puede guardar y recuperar el estado completo del juego (incluyendo posiciones de los jugadores, turnos perdidos, estado del pozo, meta, cantidad de dados, generación aleatoria de especiales y el turno en curso). Cuando el tablero se genera aleatoriamente, se utiliza una semilla reproducible para reconstruir exactamente la misma disposición al cargar, garantizando consistencia total entre sesiones.
+
 #### 3.2 Clase Jugador
 La clase `Jugador` encapsula toda la información y comportamiento relacionado con un participante individual del juego. Su diseño refleja el principio de responsabilidad única, ya que se enfoca exclusivamente en mantener el estado de un jugador y gestionar sus interacciones con el tablero.
 
@@ -84,7 +86,7 @@ Además, el uso de smart pointers proporciona seguridad garantizada. Si durante 
 
 ### 6. Características de C++ Moderno
 
-#### 6.1 C++17 Features
+#### 6.1 C++17 
 
 La deducción de tipos con `auto` se utiliza extensivamente en range-based for loops, eliminando la necesidad de especificar tipos explícitamente y haciendo el código más mantenible. Si en el futuro se cambia el tipo de contenedor, el código que usa `auto` seguirá funcionando sin modificaciones.
 
@@ -106,8 +108,21 @@ El diálogo de configuración (`showConfigDialog()`) permite:
 
 La GUI consulta a `Juego` para obtener nombres de casilla (`obtenerNombreCasilla`) y así colorear/etiquetar cada casilla coherentemente, incluso cuando las casillas especiales se generan al azar. El tablero se dibuja dinámicamente de 0..meta y se reconstruye al iniciar o reiniciar.
 
+Además, la interfaz incorpora controles nativos para guardar y cargar partidas desde la carpeta `saves/`, permitiendo gestionar múltiples archivos de guardado y reanudar el juego en cualquier momento.
+
+
 #### 7.2 Desafío principal: persistencia de configuraciones
 Integrar el guardado y la carga de parámetros fue el aspecto más desafiante de la interfaz. El reto principal estuvo en mantener la coherencia entre el estado previo al inicio del juego (donde todavía no existe un objeto `Juego`) y el estado posterior a iniciar una partida. Era necesario que el diálogo de configuración pudiera exportar presets válidos aun cuando el juego no estuviera activo, y que, al importarlos, todos los controles (cantidad de jugadores visibles, nombres, meta, dados, casillas especiales) se sincronizaran sin dejar al usuario en estados intermedios inconsistentes. Optamos por concentrar la persistencia dentro del propio diálogo, actualizando los campos interactivos en vivo, para garantizar que cualquier preset cargado se refleje inmediatamente en la UI antes de crear el juego. También se eligió un formato de texto plano porque facilita depuración, control de versiones y edición manual, a la vez que mantiene el código sencillo para fines educativos.
+
+#### 7.3 Persistencia de partidas (guardado/carga)
+
+Se añadió soporte para guardar y cargar partidas en formato binario (`.oca`) de manera transparente para el usuario:
+
+- Guardado: desde la interfaz se puede invocar “Guardar partida...”. El sistema asegura la existencia de la carpeta `saves/`, propone un nombre con sello de tiempo (por ejemplo, `Partida-YYYYMMDD-HHmmss.oca`) y guarda el estado completo del juego: nombres y posiciones de los jugadores, turnos perdidos, estado del pozo, meta, modo de casillas especiales, cantidad de dados, turno actual, fin de juego y el historial textual mostrado en la UI.
+- Carga: “Cargar partida...” abre directamente la carpeta `saves/` y restaura el juego a partir del archivo elegido. Cuando las casillas especiales se generaron al azar, se emplea una semilla almacenada para reconstruir exactamente el mismo tablero, manteniendo la coherencia de la partida.
+- Múltiples partidas: al centralizar los archivos en `saves/` y utilizar nombres con timestamp, se facilita mantener varias partidas concurrentes sin sobrescribir.
+
+Esta característica preserva la separación de responsabilidades: la UI reúne el historial visible y delega en `Juego` la serialización/deserialización. De esta forma, se garantiza que la lógica permanezca testeable y la interfaz siga siendo de cierta manera un orquestrador de todo el conjunto del juego.
 
 ### 8. Extensibilidad
 

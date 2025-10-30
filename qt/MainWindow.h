@@ -1,5 +1,5 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#ifndef VENTANAPRINCIPAL_H
+#define VENTANAPRINCIPAL_H
 
 #include <QMainWindow>
 #include <QGraphicsView>
@@ -14,45 +14,49 @@
 
 #include "../assets/Juego.h"
 
-class MainWindow : public QMainWindow {
+class VentanaPrincipal : public QMainWindow {
     Q_OBJECT
 public:
-    explicit MainWindow(QWidget* parent = nullptr);
-    ~MainWindow() override;
+    explicit VentanaPrincipal(QWidget* parent = nullptr);
+    ~VentanaPrincipal() override;
 
 private slots:
-    void onRollDice();
-    void onRestart();
+    void alLanzarDado();
+    void alReiniciar();
+    void alGuardarPartida();
+    void alCargarPartida();
 
 private:
     // UI básica
-    QGraphicsView* boardView;
-    QGraphicsScene* boardScene;
-    QPushButton* rollButton;
-    QPushButton* restartButton;
-    QLabel* turnLabel;
-    QLabel* diceLabel;
-    QLabel* lastRollLabel; // último tiro + jugador
-    QListWidget* historyList;
-    QListWidget* playersList; // lista de jugadores y estados
+    QGraphicsView* vistaTablero;
+    QGraphicsScene* escenaTablero;
+    QPushButton* botonLanzar;
+    QPushButton* botonReiniciar;
+    QPushButton* botonGuardarPartida;
+    QPushButton* botonCargarPartida;
+    QLabel* etiquetaTurno;
+    QLabel* etiquetaDado;
+    QLabel* etiquetaUltimoTiro; // último tiro + jugador
+    QListWidget* listaHistorial;
+    QListWidget* listaJugadores; // lista de jugadores y estados
 
     // Juego
     std::unique_ptr<Juego> juego;
 
     // Métodos auxiliares
-    void buildBoard();
-    QPointF cellPos(int cellIndex) const; // 0..meta
-    void syncPlayers();
-    void initGame(const std::vector<std::string>& nombres, int meta, bool especialesAleatorios, int cantidadDados);
-    void showConfigDialog();
+    void construirTablero();
+    QPointF posicionCasilla(int indiceCasilla) const; // 0..meta
+    void sincronizarJugadores();
+    void iniciarJuego(const std::vector<std::string>& nombres, int meta, bool especialesAleatorios, int cantidadDados);
+    void mostrarDialogoConfiguracion();
 
     // Config actual
-    int boardMeta_ = 63;
-    bool randomSpecials_ = false;
-    int diceCount_ = 1;
-    std::vector<std::string> lastPlayerNames_ = {"Jugador 1", "Jugador 2"};
+    int metaTablero_ = 63;
+    bool especialesAleatorios_ = false;
+    int cantidadDados_ = 1;
+    std::vector<std::string> ultimosNombresJugadores_ = {"Jugador 1", "Jugador 2"};
 };
 
-#endif // MAINWINDOW_H
+#endif // VENTANAPRINCIPAL_H
 
 
