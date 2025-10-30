@@ -71,7 +71,7 @@ El patrón Strategy se implementa de manera natural a través del sistema de her
 Esta implementación del Strategy Pattern es particularmente elegante porque elimina la necesidad de usar declaraciones condicionales complejas. En lugar de tener un método largo con múltiples `if-else` para determinar qué hacer según el tipo de casilla, cada casilla encapsula su propia lógica. Esto hace que el código sea más mantenible y extensible, ya que agregar un nuevo tipo de casilla solo requiere crear una nueva subclase sin modificar el código existente.
 
 
-#### 4.2 Patrón Observador (simplificado)
+#### 4.2 Patrón Tipo Observador
 El Patrón observador se implementa de manera simplificada en el mecanismo del pozo. Cuando un jugador cae en el pozo, todos los otros jugadores que estaban atrapados son notificados y liberados automáticamente. Aunque no se usa una implementación formal del patrón Observer con interfaces y listas de observadores, la funcionalidad es equivalente.
 
 Esta implementación simplificada es apropiada para este contexto porque la relación de observación es simple y directa: solo hay un tipo de evento (alguien cae en el pozo) y una acción correspondiente (liberar a todos los jugadores atrapados). En un sistema más complejo, se podría implementar un sistema de eventos más sofisticado, pero para este proyecto la implementación actual es suficiente y mantiene el código simple y comprensible.
@@ -112,15 +112,16 @@ Además, la interfaz incorpora controles nativos para guardar y cargar partidas 
 
 
 #### 7.2 Desafío principal: persistencia de configuraciones
+
 Integrar el guardado y la carga de parámetros fue el aspecto más desafiante de la interfaz. El reto principal estuvo en mantener la coherencia entre el estado previo al inicio del juego (donde todavía no existe un objeto `Juego`) y el estado posterior a iniciar una partida. Era necesario que el diálogo de configuración pudiera exportar presets válidos aun cuando el juego no estuviera activo, y que, al importarlos, todos los controles (cantidad de jugadores visibles, nombres, meta, dados, casillas especiales) se sincronizaran sin dejar al usuario en estados intermedios inconsistentes. Optamos por concentrar la persistencia dentro del propio diálogo, actualizando los campos interactivos en vivo, para garantizar que cualquier preset cargado se refleje inmediatamente en la UI antes de crear el juego. También se eligió un formato de texto plano porque facilita depuración, control de versiones y edición manual, a la vez que mantiene el código sencillo para fines educativos.
 
 #### 7.3 Persistencia de partidas (guardado/carga)
 
 Se añadió soporte para guardar y cargar partidas en formato binario (`.oca`) de manera transparente para el usuario:
 
-- Guardado: desde la interfaz se puede invocar “Guardar partida...”. El sistema asegura la existencia de la carpeta `saves/`, propone un nombre con sello de tiempo (por ejemplo, `Partida-YYYYMMDD-HHmmss.oca`) y guarda el estado completo del juego: nombres y posiciones de los jugadores, turnos perdidos, estado del pozo, meta, modo de casillas especiales, cantidad de dados, turno actual, fin de juego y el historial textual mostrado en la UI.
-- Carga: “Cargar partida...” abre directamente la carpeta `saves/` y restaura el juego a partir del archivo elegido. Cuando las casillas especiales se generaron al azar, se emplea una semilla almacenada para reconstruir exactamente el mismo tablero, manteniendo la coherencia de la partida.
-- Múltiples partidas: al centralizar los archivos en `saves/` y utilizar nombres con timestamp, se facilita mantener varias partidas concurrentes sin sobrescribir.
+Guardado: desde la interfaz se puede invocar “Guardar partida...”. El sistema asegura la existencia de la carpeta `saves/`, propone un nombre con sello de tiempo (por ejemplo, `Partida-YYYYMMDD-HHmmss.oca`) y guarda el estado completo del juego: nombres y posiciones de los jugadores, turnos perdidos, estado del pozo, meta, modo de casillas especiales, cantidad de dados, turno actual, fin de juego y el historial textual mostrado en la UI. 
+Carga: “Cargar partida...” abre directamente la carpeta `saves/` y restaura el juego a partir del archivo elegido. Cuando las casillas especiales se generaron al azar, se emplea una semilla almacenada para reconstruir exactamente el mismo tablero, manteniendo la coherencia de la partida.
+Múltiples partidas: al centralizar los archivos en `saves/` y utilizar nombres con timestamp, se facilita mantener varias partidas concurrentes sin sobrescribir.
 
 Esta característica preserva la separación de responsabilidades: la UI reúne el historial visible y delega en `Juego` la serialización/deserialización. De esta forma, se garantiza que la lógica permanezca testeable y la interfaz siga siendo de cierta manera un orquestrador de todo el conjunto del juego.
 
@@ -138,5 +139,6 @@ La clase `Jugador` también está preparada para extensiones, con métodos que p
 
 #### 8.3 Interfaz Gráfica
 La separación entre la lógica del juego y la interfaz de usuario es una característica importante del diseño. Las clases del modelo (Juego, Jugador, Casilla, etc.) son completamente independientes de la interfaz gráfica, lo que permite modificar o extender la interfaz sin afectar la lógica del juego.
+
 
 Esta separación se demuestra con Qt: `MainWindow` (vista/controlador) se comunica con `Juego` (modelo) a través de una interfaz bien definida, demostrando la robustez del diseño arquitectónico y la aplicabilidad del patrón MVC.

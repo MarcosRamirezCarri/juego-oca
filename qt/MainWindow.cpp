@@ -59,17 +59,18 @@ VentanaPrincipal::VentanaPrincipal(QWidget* parent)
     QFont f; f.setPointSize(12);
     etiquetaTurno->setFont(f);
     etiquetaDado->setFont(f);
+    sidePanel->setMinimumWidth(420);
     sideLayout->addWidget(etiquetaTurno);
     sideLayout->addWidget(etiquetaDado);
     sideLayout->addWidget(botonLanzar);
-    sideLayout->addWidget(botonReiniciar);
-    sideLayout->addWidget(botonGuardarPartida);
-    sideLayout->addWidget(botonCargarPartida);
     sideLayout->addWidget(etiquetaUltimoTiro);
     sideLayout->addWidget(new QLabel("Jugadores:", this));
     sideLayout->addWidget(listaJugadores);
+    sideLayout->addWidget(botonReiniciar);
     sideLayout->addWidget(new QLabel("Historial:", this));
     sideLayout->addWidget(listaHistorial, 1);
+    sideLayout->addWidget(botonGuardarPartida);
+    sideLayout->addWidget(botonCargarPartida);
 
     rootLayout->addWidget(vistaTablero, 1);
     rootLayout->addWidget(sidePanel);
