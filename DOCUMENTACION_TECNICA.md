@@ -35,6 +35,8 @@ La implementación de esta clase demuestra un buen uso de la composición, ya qu
 
 Adicionalmente, la clase incorpora persistencia binaria de la partida: puede guardar y recuperar el estado completo del juego (incluyendo posiciones de los jugadores, turnos perdidos, estado del pozo, meta, cantidad de dados, generación aleatoria de especiales y el turno en curso). Cuando el tablero se genera aleatoriamente, se utiliza una semilla reproducible para reconstruir exactamente la misma disposición al cargar, garantizando consistencia total entre sesiones.
 
+Regla añadida: salida desde la casilla inicial. Si un jugador está en la casilla 0 y el resultado de la tirada es menor que 6, no se mueve y se pasa el turno. Esta regla está implementada en `Juego::jugarTurno()` (flujo consola) y en `Juego::lanzarDadoYJugarTurno()` (flujo para la GUI), devolviendo una descripción clara mediante `ResultadoTurno` para que la interfaz la muestre.
+
 #### 3.2 Clase Jugador
 La clase `Jugador` encapsula toda la información y comportamiento relacionado con un participante individual del juego. Su diseño refleja el principio de responsabilidad única, ya que se enfoca exclusivamente en mantener el estado de un jugador y gestionar sus interacciones con el tablero.
 
@@ -109,6 +111,8 @@ El diálogo de configuración (`showConfigDialog()`) permite:
 La GUI consulta a `Juego` para obtener nombres de casilla (`obtenerNombreCasilla`) y así colorear/etiquetar cada casilla coherentemente, incluso cuando las casillas especiales se generan al azar. El tablero se dibuja dinámicamente de 0..meta y se reconstruye al iniciar o reiniciar.
 
 Además, la interfaz incorpora controles nativos para guardar y cargar partidas desde la carpeta `saves/`, permitiendo gestionar múltiples archivos de guardado y reanudar el juego en cualquier momento.
+
+Indicador de la nueva regla en UI: cuando un jugador en la casilla 0 tira menos de 6 y no puede salir, la etiqueta de último tiro muestra la marca "(no sale)" y se añade una línea al historial: "Regla: necesitas 6 para salir de la casilla inicial.". Esto está integrado en `VentanaPrincipal::alLanzarDado()`, además del mensaje descriptivo que llega desde `ResultadoTurno`.
 
 
 #### 7.2 Desafío principal: persistencia de configuraciones

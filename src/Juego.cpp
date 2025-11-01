@@ -92,6 +92,12 @@ void Juego::jugarTurno() {
     int resultadoDado = dado->lanzar(); // lanzar dado
     
     int posicionActual = jugador.conseguirPosicion();
+    // Regla: desde la casilla inicial (0) solo se mueve si el tiro es >= 6
+    if (posicionActual == 0 && resultadoDado < 6) {
+        turnoExtra = false;
+        pasarTurno();
+        return;
+    }
     int nuevaPosicion = posicionActual + resultadoDado;
     
     // Verificar si se pasa de la meta
@@ -213,6 +219,14 @@ ResultadoTurno Juego::lanzarDadoYJugarTurno() {
     
     int resultado = dado->lanzar();
     int posInicial = jugadores[jugadorActual].conseguirPosicion();
+    // Regla: desde la casilla inicial (0) solo se mueve si el tiro es >= 6
+    if (posInicial == 0 && resultado < 6) {
+        string mensaje = jugadores[jugadorActual].conseguirNombre() +
+            " está en la casilla inicial y sacó " + to_string(resultado) + ": no puede salir";
+        turnoExtra = false;
+        pasarTurno();
+        return ResultadoTurno(resultado, mensaje);
+    }
     int nuevaPos = posInicial + resultado;
     int jugadorQueJuega = jugadorActual;
     

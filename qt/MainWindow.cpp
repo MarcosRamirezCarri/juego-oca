@@ -213,6 +213,11 @@ void VentanaPrincipal::alLanzarDado() {
     if (previo < 0) previo = juego->obtenerCantidadJugadores() - 1;
     QString nombrePrevio = QString::fromStdString(juego->obtenerJugador(previo).conseguirNombre());
     etiquetaUltimoTiro->setText(QString("Último: %1 → %2").arg(nombrePrevio).arg(res.resultadoDado));
+    // Regla visual en Qt: desde casilla 0, si saca < 6 no sale
+    if (res.resultadoDado > 0 && res.resultadoDado < 6 && juego->obtenerJugador(previo).conseguirPosicion() == 0) {
+        etiquetaUltimoTiro->setText(etiquetaUltimoTiro->text() + " (no sale)");
+        listaHistorial->addItem("Regla: necesitas 6 para salir de la casilla inicial.");
+    }
     // Agregar al historial (dividir en líneas si hay saltos)
     const QString desc = QString::fromStdString(res.descripcion);
     for (const QString& line : desc.split('\n')) {
