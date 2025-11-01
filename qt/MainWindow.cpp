@@ -17,6 +17,9 @@
 #include <QDir>
 #include <QDateTime>
 #include <algorithm>
+#include <QSlider>
+#include <QToolButton>
+#include <QStyle>
 
 static const int ANCHO_VENTANA = 1500;
 static const int ALTO_VENTANA = 900;
@@ -60,6 +63,26 @@ VentanaPrincipal::VentanaPrincipal(QWidget* parent)
     etiquetaTurno->setFont(f);
     etiquetaDado->setFont(f);
     sidePanel->setMinimumWidth(420);
+    // Botón de ayuda (esquina) para la partida
+    QToolButton* helpGameBtn = new QToolButton(sidePanel);
+    helpGameBtn->setIcon(style()->standardIcon(QStyle::SP_DialogHelpButton));
+    helpGameBtn->setAutoRaise(true);
+    helpGameBtn->setCursor(Qt::PointingHandCursor);
+    helpGameBtn->setToolTip(
+        "Reglas básicas:\n"
+        "- Salida del inicio: con 1 dado necesitas >3; con 2 dados necesitas >6.\n"
+        "- Oca: salta a la siguiente oca y ganas turno extra.\n"
+        "- Puente: te trasladas al destino del puente.\n"
+        "- Posada: pierdes 1 turno.\n"
+        "- Pozo: quedas atrapado hasta que otro jugador caiga allí.\n"
+        "- Laberinto: retrocedes a la casilla de destino.\n"
+        "- Cárcel: pierdes 2 turnos.\n"
+        "- Calavera: vuelves a la casilla inicial.\n"
+        "- Meta: debes llegar exactamente a la casilla de meta, de lo contrario rebotas en la casilla de meta.");
+    QHBoxLayout* helpGameRow = new QHBoxLayout();
+    helpGameRow->addStretch();
+    helpGameRow->addWidget(helpGameBtn);
+    sideLayout->addLayout(helpGameRow);
     sideLayout->addWidget(etiquetaTurno);
     sideLayout->addWidget(etiquetaDado);
     sideLayout->addWidget(botonLanzar);
@@ -181,11 +204,22 @@ void VentanaPrincipal::sincronizarJugadores() {
     for (int i = 0; i < n; ++i) {
         int pos = juego->obtenerJugador(i).conseguirPosicion();
         QPointF p = posicionCasilla(pos);
-        // separacion para multiples jugadores
         p.rx() += (i % 2) * 10 + 5;
         p.ry() += (i / 2) * 10 + 5;
-        auto* circ = escenaTablero->addEllipse(QRectF(p.x(), p.y(), 18, 18), QPen(Qt::black), QBrush(colors[i % 4]));
+        const int tokenSize = 32;
+        auto* circ = escenaTablero->addEllipse(QRectF(p.x(), p.y(), tokenSize, tokenSize), QPen(Qt::black), QBrush(colors[i % 4]));
         circ->setData(0, "ficha");
+
+        QString name = QString::fromStdString(juego->obtenerJugador(i).conseguirNombre()).trimmed();
+        QString initial = name.isEmpty() ? QString("?") : QString(name.at(0)).toUpper();
+        QFont tf; tf.setPointSize(14); tf.setBold(true);
+        auto* tItem = escenaTablero->addText(initial, tf);
+        tItem->setDefaultTextColor(Qt::black); 
+        QRectF tb = tItem->boundingRect();
+        qreal tx = p.x() + (tokenSize - tb.width()) / 2.0;
+        qreal ty = p.y() + (tokenSize - tb.height()) / 2.0 - 1.0; 
+        tItem->setPos(tx, ty);
+        tItem->setData(0, "ficha");
     }
 
     // Actualizar lista de jugadores y estados
@@ -213,10 +247,13 @@ void VentanaPrincipal::alLanzarDado() {
     if (previo < 0) previo = juego->obtenerCantidadJugadores() - 1;
     QString nombrePrevio = QString::fromStdString(juego->obtenerJugador(previo).conseguirNombre());
     etiquetaUltimoTiro->setText(QString("Último: %1 → %2").arg(nombrePrevio).arg(res.resultadoDado));
-    // Regla visual en Qt: desde casilla 0, si saca < 6 no sale
-    if (res.resultadoDado > 0 && res.resultadoDado < 6 && juego->obtenerJugador(previo).conseguirPosicion() == 0) {
-        etiquetaUltimoTiro->setText(etiquetaUltimoTiro->text() + " (no sale)");
-        listaHistorial->addItem("Regla: necesitas 6 para salir de la casilla inicial.");
+    // Regla visual en Qt: desde casilla 0, verifica umbral según cantidad de dados
+    {
+        const int threshold = (juego->obtenerCantidadDados() > 1) ? 6 : 3;
+        if (res.resultadoDado > 0 && res.resultadoDado <= threshold && juego->obtenerJugador(previo).conseguirPosicion() == 0) {
+            etiquetaUltimoTiro->setText(etiquetaUltimoTiro->text() + " (no sale)");
+            listaHistorial->addItem(QString("Regla: necesitas sacar más de %1 para salir del inicio.").arg(threshold));
+        }
     }
     // Agregar al historial (dividir en líneas si hay saltos)
     const QString desc = QString::fromStdString(res.descripcion);
@@ -353,13 +390,20 @@ void VentanaPrincipal::mostrarDialogoConfiguracion() {
     v->addWidget(lnum);
     v->addWidget(spin);
 
-    // Meta
+    // Meta (slider)
     QLabel* lmeta = new QLabel("Casillas del tablero (63-90):", &dlg);
-    QSpinBox* spinMeta = new QSpinBox(&dlg);
-    spinMeta->setRange(63, 90);
-    spinMeta->setValue(metaTablero_);
+    QSlider* sliderMeta = new QSlider(Qt::Horizontal, &dlg);
+    sliderMeta->setRange(63, 90);
+    sliderMeta->setTickInterval(1);
+    sliderMeta->setTickPosition(QSlider::TicksBelow);
+    sliderMeta->setValue(metaTablero_);
+    QLabel* lmetaVal = new QLabel(QString::number(metaTablero_), &dlg);
     v->addWidget(lmeta);
-    v->addWidget(spinMeta);
+    v->addWidget(sliderMeta);
+    v->addWidget(lmetaVal);
+    QObject::connect(sliderMeta, &QSlider::valueChanged, &dlg, [&](int val){
+        lmetaVal->setText(QString::number(val));
+    });
 
     // Especiales aleatorios
     QCheckBox* chkAleatorio = new QCheckBox("Generar casillas especiales al azar", &dlg);
@@ -419,7 +463,7 @@ void VentanaPrincipal::mostrarDialogoConfiguracion() {
         }
 
         QTextStream out(&file);
-        out << "meta=" << spinMeta->value() << '\n';
+        out << "meta=" << sliderMeta->value() << '\n';
         out << "randomSpecials=" << (chkAleatorio->isChecked() ? 1 : 0) << '\n';
         out << "diceCount=" << (chkDosDados->isChecked() ? 2 : 1) << '\n';
         QStringList nombres;
@@ -459,7 +503,7 @@ void VentanaPrincipal::mostrarDialogoConfiguracion() {
         int metaVal = values.value("meta", QString::number(metaTablero_)).toInt(&ok);
         if (ok) {
             metaVal = std::clamp(metaVal, 63, 90);
-            spinMeta->setValue(metaVal);
+            sliderMeta->setValue(metaVal);
         }
 
         int randVal = values.value("randomSpecials", QString::number(especialesAleatorios_ ? 1 : 0)).toInt(&ok);
@@ -499,6 +543,29 @@ void VentanaPrincipal::mostrarDialogoConfiguracion() {
     QObject::connect(ok, &QPushButton::clicked, &dlg, &QDialog::accept);
     QObject::connect(cancel, &QPushButton::clicked, &dlg, &QDialog::reject);
 
+    // Cartel con reglas del juego
+    const QString reglas =
+        "Reglas básicas:\n"
+        "- Salida del inicio: con 1 dado necesitas >3; con 2 dados necesitas >6.\n"
+        "- Oca: salta a la siguiente oca y ganas turno extra.\n"
+        "- Puente: te trasladas al destino del puente.\n"
+        "- Posada: pierdes 1 turno.\n"
+        "- Pozo: quedas atrapado hasta que otro jugador caiga allí.\n"
+        "- Laberinto: retrocedes a la casilla de destino.\n"
+        "- Cárcel: pierdes 2 turnos.\n"
+        "- Calavera: vuelves a la casilla inicial.\n"
+        "- Meta: debes llegar exactamente a la casilla de meta,\n"
+        "de lo contrario rebotas en la casilla de meta.";
+    QToolButton* helpCfgBtn = new QToolButton(&dlg);
+    helpCfgBtn->setIcon(style()->standardIcon(QStyle::SP_DialogHelpButton));
+    helpCfgBtn->setAutoRaise(true);
+    helpCfgBtn->setCursor(Qt::PointingHandCursor);
+    helpCfgBtn->setToolTip(reglas);
+    QHBoxLayout* helpCfgRow = new QHBoxLayout();
+    helpCfgRow->addStretch();
+    helpCfgRow->addWidget(helpCfgBtn);
+    v->insertLayout(0, helpCfgRow);
+
     if (dlg.exec() == QDialog::Accepted) {
         int cant = spin->value();
         std::vector<std::string> nombres;
@@ -507,7 +574,7 @@ void VentanaPrincipal::mostrarDialogoConfiguracion() {
             if (t.isEmpty()) t = QString("Jugador %1").arg(i + 1);
             nombres.push_back(t.toStdString());
         }
-        int meta = spinMeta->value();
+        int meta = sliderMeta->value();
         bool ale = chkAleatorio->isChecked();
         int dados = chkDosDados->isChecked() ? 2 : 1;
         iniciarJuego(nombres, meta, ale, dados);

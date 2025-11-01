@@ -80,7 +80,13 @@ void Juego::reiniciarJuego() {
     // Reiniciar el dado con la misma cantidad de dados seleccionada
     dado = make_unique<Dado>(6, cantidadDados);
 
-    // Reiniciar las casillas
+    // Si las casillas especiales son aleatorias, generar una nueva semilla para rerollear
+    if (especialesAleatorios) {
+        std::random_device rd;
+        semillaAleatoria = rd();
+    }
+
+    // Reiniciar las casillas (se usar e1 la nueva semilla si corresponde)
     inicializarCasillas();
 }
 
@@ -92,11 +98,13 @@ void Juego::jugarTurno() {
     int resultadoDado = dado->lanzar(); // lanzar dado
     
     int posicionActual = jugador.conseguirPosicion();
-    // Regla: desde la casilla inicial (0) solo se mueve si el tiro es >= 6
-    if (posicionActual == 0 && resultadoDado < 6) {
-        turnoExtra = false;
-        pasarTurno();
-        return;
+    if (posicionActual == 0) {
+        const int cant = (dado->getCantidadDados() > 1) ? 6 : 3;
+        if (resultadoDado <= cant) {
+            turnoExtra = false;
+            pasarTurno();
+            return;
+        }
     }
     int nuevaPosicion = posicionActual + resultadoDado;
     
@@ -219,13 +227,16 @@ ResultadoTurno Juego::lanzarDadoYJugarTurno() {
     
     int resultado = dado->lanzar();
     int posInicial = jugadores[jugadorActual].conseguirPosicion();
-    // Regla: desde la casilla inicial (0) solo se mueve si el tiro es >= 6
-    if (posInicial == 0 && resultado < 6) {
-        string mensaje = jugadores[jugadorActual].conseguirNombre() +
-            " está en la casilla inicial y sacó " + to_string(resultado) + ": no puede salir";
-        turnoExtra = false;
-        pasarTurno();
-        return ResultadoTurno(resultado, mensaje);
+    // Regla de salida desde casilla 0 (1 dado >3, 2 dados >6)
+    if (posInicial == 0) {
+        const int threshold = (dado->getCantidadDados() > 1) ? 6 : 3;
+        if (resultado <= threshold) {
+            string mensaje = jugadores[jugadorActual].conseguirNombre() +
+                " está en la casilla inicial y sacó " + to_string(resultado) + ": no puede salir";
+            turnoExtra = false;
+            pasarTurno();
+            return ResultadoTurno(resultado, mensaje);
+        }
     }
     int nuevaPos = posInicial + resultado;
     int jugadorQueJuega = jugadorActual;
