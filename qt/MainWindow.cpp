@@ -453,8 +453,15 @@ void VentanaPrincipal::mostrarDialogoConfiguracion() {
     v->addLayout(saveLoadLayout);
 
     QObject::connect(btnSave, &QPushButton::clicked, &dlg, [&](){
-        QString fileName = QFileDialog::getSaveFileName(&dlg, "Guardar configuración", QString(), "Archivos de texto (*.txt);;Todos los archivos (*.*)");
+        QDir dir(QDir::current());
+        if (!dir.exists("saves")) {
+            dir.mkpath("saves");
+        }
+        const QString sugerido = QString("Configuracion-%1.txt").arg(QDateTime::currentDateTime().toString("yyyyMMdd-HHmmss"));
+        const QString rutaInicial = dir.filePath(QString("saves/%1").arg(sugerido));
+        QString fileName = QFileDialog::getSaveFileName(&dlg, "Guardar configuración", rutaInicial, "Archivos de texto (*.txt);;Todos los archivos (*.*)");
         if (fileName.isEmpty()) return;
+        if (!fileName.endsWith(".txt")) fileName += ".txt";
 
         QFile file(fileName);
         if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
@@ -477,7 +484,12 @@ void VentanaPrincipal::mostrarDialogoConfiguracion() {
     });
 
     QObject::connect(btnLoad, &QPushButton::clicked, &dlg, [&](){
-        QString fileName = QFileDialog::getOpenFileName(&dlg, "Cargar configuración", QString(), "Archivos de texto (*.txt);;Todos los archivos (*.*)");
+        QDir dir(QDir::current());
+        if (!dir.exists("saves")) {
+            dir.mkpath("saves");
+        }
+        const QString rutaInicial = dir.filePath("saves/");
+        QString fileName = QFileDialog::getOpenFileName(&dlg, "Cargar configuración", rutaInicial, "Archivos de texto (*.txt);;Todos los archivos (*.*)");
         if (fileName.isEmpty()) return;
 
         QFile file(fileName);

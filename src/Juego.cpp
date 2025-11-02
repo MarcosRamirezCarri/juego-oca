@@ -598,10 +598,5 @@ std::unique_ptr<Juego> Juego::cargarPartida(const std::string& rutaArchivo, std:
         if (delta != 0) juegoPtr->jugadores[i].perderTurnos(delta);
         if (enPozo[i]) juegoPtr->jugadores[i].entrarPozo(); else juegoPtr->jugadores[i].salirPozo();
     }
-
-    // Casillas: si especialesAleatorios == false, recrear según reglas estándar; si true, mantenemos las existentes.
-    // Debido a no tener parámetros detallados, confiamos en la lógica existente para un tablero consistente.
-    // Ya se creó con inicializarCasillas(); no cambiamos.
-
     return juegoPtr;
 }
